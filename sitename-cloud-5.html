@@ -1,0 +1,2458 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>ying / yang</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="community-chat.css">
+    <link rel="stylesheet" href="site-settings.css">
+    <style>
+        /* CURSOR: glowing white ball everywhere */
+        html, body, *, *::before, *::after {
+            cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><defs><radialGradient id='g' cx='38%25' cy='34%25' r='70%25'><stop offset='0%25' stop-color='%23ffffff'/><stop offset='60%25' stop-color='%23f2f2f2'/><stop offset='100%25' stop-color='%23c8c8c8'/></radialGradient><radialGradient id='h' r='50%25'><stop offset='55%25' stop-color='%23ffffff' stop-opacity='0.35'/><stop offset='100%25' stop-color='%23ffffff' stop-opacity='0'/></radialGradient></defs><circle cx='16' cy='16' r='16' fill='url(%23h)'/><circle cx='16' cy='16' r='9' fill='url(%23g)' stroke='%23000000' stroke-opacity='0.45' stroke-width='1'/></svg>") 16 16, auto !important;
+        }
+        /* RESET & BASE */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #000000;
+            min-height: 100vh;
+            display: flex;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            color: #e0e0e0;
+        }
+        #liquidEtherBg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* GLASS DISTORTION FILTER */
+        .glass-filter {
+            position: absolute;
+            inset: 0;
+            filter: url(#glass-distortion);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* GLASS ICONS GRID */
+        .glass-icons-grid {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+            padding: 16px 0 20px 0;
+            flex-wrap: wrap;
+        }
+        .glass-icon {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .glass-icon:hover {
+            transform: translateY(-6px) scale(1.05);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .glass-icon .glass-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%, rgba(255,255,255,0.02) 100%);
+            z-index: 1;
+            pointer-events: none;
+            border-radius: 20px;
+        }
+        .glass-icon .glass-specular {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08) 0%, transparent 60%);
+            z-index: 1;
+            pointer-events: none;
+            border-radius: 20px;
+        }
+        .glass-icon .glass-content {
+            position: relative;
+            z-index: 2;
+            color: rgba(255,255,255,0.5);
+            transition: 0.3s ease;
+            font-size: 1.4rem;
+        }
+        .glass-icon:hover .glass-content {
+            color: #fff;
+        }
+        .glass-icon .glass-content i {
+            font-size: 1.4rem;
+        }
+
+        /* FAKE BROWSER TAB STRIP */
+        :root { --tabstrip-h: 38px; --urlbar-h: 48px; --chrome-h: calc(var(--tabstrip-h) + var(--urlbar-h)); }
+        .browser-tabs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--tabstrip-h);
+            z-index: 101;
+            background: rgba(3, 3, 3, 0.92);
+            backdrop-filter: blur(18px);
+            display: flex;
+            align-items: flex-end;
+            padding: 0 10px;
+            gap: 2px;
+        }
+        .browser-tabs-list { display: flex; align-items: flex-end; gap: 2px; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; height: 100%; }
+        .browser-tabs-list::-webkit-scrollbar { display: none; }
+        .browser-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 0 1 200px;
+            min-width: 110px;
+            height: 31px;
+            padding: 0 8px 0 12px;
+            border-radius: 10px 10px 0 0;
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-bottom: none;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s ease, color 0.15s ease;
+            animation: tabIn 0.18s ease;
+        }
+        @keyframes tabIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .browser-tab:hover { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.7); }
+        .browser-tab.active { background: rgba(8, 8, 8, 0.95); border-color: rgba(255, 255, 255, 0.08); color: #fff; }
+        .browser-tab .tab-icon { flex-shrink: 0; font-size: 0.85rem; line-height: 1; }
+        .browser-tab .tab-title { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .browser-tab .tab-close {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: inherit;
+            font-size: 0.9rem;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .browser-tab .tab-close:hover { opacity: 1; background: rgba(255, 255, 255, 0.1); }
+        .browser-tab-new {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            margin: 0 0 2px 4px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 1.1rem;
+            cursor: pointer;
+            align-self: center;
+        }
+        .browser-tab-new:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+
+        /* IN-SITE SEARCH / WEB VIEW */
+        .webview-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px 0 12px 0; }
+        .webview-title { color: rgba(255,255,255,0.6); font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .webview-title strong { color: #fff; font-weight: 500; }
+        .webview-external { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 30px; padding: 6px 16px; color: rgba(255,255,255,0.6); font-size: 0.75rem; text-decoration: none; white-space: nowrap; }
+        .webview-external:hover { color: #fff; background: rgba(255,255,255,0.09); }
+        .webview-frame-wrapper { width: 100%; height: calc(100vh - var(--chrome-h) - 110px); min-height: 400px; border-radius: 16px; overflow: hidden; background: #fff; }
+        .webview-frame-wrapper iframe { width: 100%; height: 100%; border: none; display: block; }
+
+        /* FAKE BROWSER ADDRESS BAR */
+        .browser-bar {
+            position: fixed;
+            top: var(--tabstrip-h);
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            background: rgba(8, 8, 8, 0.85);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: var(--urlbar-h);
+        }
+        .browser-bar .lock-icon { opacity: 0.3; font-size: 0.9rem; color: #aaa; flex-shrink: 0; }
+        .browser-bar .url-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 30px;
+            padding: 6px 16px;
+            color: #ccc;
+            font-size: 0.85rem;
+            outline: none;
+            font-family: inherit;
+            letter-spacing: 0.3px;
+            min-width: 0;
+        }
+        .browser-bar .url-input:focus { border-color: rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.07); }
+        .browser-bar .nav-buttons { display: flex; gap: 6px; color: rgba(255,255,255,0.15); font-size: 1.1rem; flex-shrink: 0; }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: var(--chrome-h);
+            width: 68px;
+            height: calc(100vh - var(--chrome-h));
+            z-index: 10;
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0 16px 0;
+            overflow-y: auto;
+            gap: 6px;
+        }
+        .sidebar::-webkit-scrollbar { width: 2px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+        .sidebar-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: 0.2s ease;
+            flex-shrink: 0;
+            position: relative;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .sidebar-icon svg { width: 22px; height: 22px; display: block; }
+        .sidebar-icon .yy-gear { display: flex; }
+        .sidebar-icon:hover { background: #000; border-color: rgba(255, 255, 255, 0.35); transform: scale(1.05); color: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05); }
+        .sidebar-icon .label {
+            display: none;
+            position: absolute;
+            left: 52px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            padding: 3px 12px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            color: #fff;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.06);
+            pointer-events: none;
+        }
+        .sidebar-icon:hover .label { display: block; }
+        .sidebar-icon.yinyang { background: transparent; border: none; margin-bottom: 8px; cursor: default; }
+        .sidebar-icon.yinyang svg { width: 32px; height: 32px; }
+        .sidebar-icon.yinyang:hover { transform: none; background: transparent; box-shadow: none; }
+        .sidebar-divider { width: 28px; height: 1px; background: rgba(255,255,255,0.05); margin: 4px 0 6px 0; }
+        .sidebar-icon.active { background: #000; border-color: rgba(255,255,255,0.6); color: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08); }
+
+        /* MAIN CONTENT */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1400px;
+            margin: var(--chrome-h) 0 20px 68px;
+            padding: 20px 20px 40px 20px;
+            min-height: calc(100vh - var(--chrome-h) - 20px);
+        }
+
+        /* PAGES */
+        .page { display: none; flex-direction: column; width: 100%; animation: fadeIn 0.3s ease; }
+        .page.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* HOME PAGE */
+        .home-header-label { color: rgba(255,255,255,0.25); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px; text-align: center; }
+        .home-main-title { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+        .home-yin-yang-symbol { display: inline-block; width: 44px; height: 44px; flex-shrink: 0; }
+        .home-yin-yang-symbol svg { display: block; width: 100%; height: 100%; }
+        .home-gradient-title {
+            font-size: 3.6rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-transform: lowercase;
+            background: linear-gradient(90deg, #000000 0%, #ffffff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 60px rgba(255,255,255,0.05);
+            line-height: 1.1;
+        }
+        .home-sub-title { color: rgba(255,255,255,0.12); font-size: 0.85rem; font-weight: 300; letter-spacing: 4px; margin-bottom: 28px; text-align: center; text-transform: lowercase; }
+        .home-search-wrapper { width: 100%; max-width: 500px; margin: 0 auto 28px auto; position: relative; }
+        .home-search-bar {
+            width: 100%;
+            padding: 16px 24px 16px 52px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 60px;
+            color: #ffffff;
+            outline: none;
+            transition: 0.3s ease;
+            backdrop-filter: blur(6px);
+            font-weight: 400;
+        }
+        .home-search-bar::placeholder { color: rgba(255, 255, 255, 0.2); font-weight: 300; letter-spacing: 0.5px; }
+        .home-search-bar:focus { border-color: rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.07); }
+        .home-search-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); opacity: 0.2; pointer-events: none; }
+        .home-nav-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px; margin: 0 auto 20px auto; }
+        .home-nav-item {
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 12px 4px;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 450;
+            text-decoration: none;
+            transition: 0.2s;
+            text-align: center;
+            letter-spacing: 0.3px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        .home-nav-item svg { width: 24px; height: 24px; display: block; }
+        .home-nav-item:hover { background: #000; border-color: rgba(255, 255, 255, 0.35); color: #ffffff; transform: translateY(-2px); }
+        .home-nav-item.special { border-color: rgba(255,255,255,0.08); background: #000; }
+        .home-discord-banner {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 40px;
+            padding: 12px 20px;
+            margin: 4px auto 24px auto;
+            max-width: 460px;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.8rem;
+            font-weight: 300;
+            letter-spacing: 0.8px;
+            backdrop-filter: blur(4px);
+            text-align: center;
+        }
+        .home-discord-banner strong { color: rgba(255,255,255,0.6); font-weight: 500; }
+        .home-testimonials { max-width: 480px; margin: 0 auto; text-align: left; display: flex; flex-direction: column; gap: 14px; }
+        .home-testimonial { background: rgba(255, 255, 255, 0.015); border-left: 2px solid rgba(255, 255, 255, 0.06); padding: 10px 16px; border-radius: 0 12px 12px 0; }
+        .home-testimonial .author { color: rgba(255,255,255,0.5); font-size: 0.65rem; font-weight: 400; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .home-testimonial .text { color: rgba(255,255,255,0.3); font-size: 0.85rem; font-weight: 300; line-height: 1.4; }
+
+        /* GAME LIBRARY */
+        .game-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 12px 0 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); margin-bottom: 16px; }
+        .game-header h1 { font-family: 'Orbitron', sans-serif; font-size: 2.2rem; font-weight: 900; background: linear-gradient(90deg, #000000 0%, #ffffff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: 2px; }
+        .game-tabs { display: flex; gap: 12px; flex-wrap: wrap; }
+        .game-tab-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.06); padding: 8px 24px; border-radius: 50px; color: #aaa; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: 0.3s ease; backdrop-filter: blur(10px); }
+        .game-tab-btn:hover { color: white; background: rgba(255, 255, 255, 0.08); }
+        .game-tab-btn.active { background: #00f3ff; color: #000; border-color: #00f3ff; box-shadow: 0 0 20px rgba(0, 243, 255, 0.3); }
+        .game-controls { display: flex; justify-content: center; margin: 16px 0 30px 0; }
+        .game-search-bar { width: 100%; max-width: 500px; padding: 14px 24px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.5); color: white; font-size: 1rem; font-family: 'Poppins', sans-serif; backdrop-filter: blur(10px); transition: all 0.3s ease; }
+        .game-search-bar:focus { border-color: #00f3ff; background: rgba(0,0,0,0.7); box-shadow: 0 0 30px rgba(0, 243, 255, 0.1); outline: none; }
+        .game-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; animation: fadeIn 0.5s ease; }
+        .game-card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); backdrop-filter: blur(8px); display: flex; flex-direction: column; }
+        .game-card:hover { transform: translateY(-8px) scale(1.02); border-color: #fff; box-shadow: 0 15px 40px rgba(0,0,0,0.5); background: rgba(255, 255, 255, 0.08); }
+        .game-card-thumb { width: 100%; height: 120px; overflow: hidden; background: #111; position: relative; }
+        .game-card-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+        .game-card:hover .game-card-thumb img { transform: scale(1.08); }
+        .game-card-info { padding: 12px 14px; text-align: center; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); }
+        .game-card-title { font-weight: 600; font-size: 0.9rem; color: #fff; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lumin-games { margin-top: 20px; }
+        .lumin-games:empty { display: none; }
+        .lumin-status { text-align: center; color: #888; font-size: 0.85rem; margin-top: 20px; }
+        .lumin-more-wrap { display: flex; justify-content: center; margin-top: 24px; }
+        .game-footer { text-align: center; margin-top: 40px; padding-bottom: 20px; color: #666; font-size: 0.8rem; }
+        .game-footer b { color: #00f3ff; }
+        .hidden { display: none !important; }
+
+        /* ANIME & STREAMING PAGE (replaces movies) */
+        .streaming-iframe-wrapper { width: 100%; height: 80vh; border-radius: 16px; overflow: hidden; background: #111; }
+        .streaming-iframe-wrapper iframe { width: 100%; height: 100%; border: none; }
+        .anime-hero { display: flex; gap: 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+        .anime-hero-poster { width: 130px; height: 185px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg,#222,#000); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; }
+        .anime-hero-poster img { width: 100%; height: 100%; object-fit: cover; }
+        .anime-hero-info { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 8px; }
+        .anime-chip { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); border-radius: 30px; padding: 5px 14px; color: rgba(255,255,255,0.6); font-size: 0.75rem; cursor: pointer; transition: 0.2s ease; }
+        .anime-chip.active { background: rgba(255,255,255,0.2); color: #fff; border-color: rgba(255,255,255,0.3); }
+        .anime-section-title { color: #fff; font-weight: 300; font-size: 1.1rem; margin: 18px 0 12px 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .anime-back-link { color: rgba(255,255,255,0.4); font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
+        .anime-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+        .anime-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; overflow: hidden; cursor: pointer; transition: all 0.3s cubic-bezier(0.25,0.8,0.25,1); }
+        .anime-card:hover { transform: translateY(-6px); border-color: #fff; box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
+        .anime-card-poster { width: 100%; aspect-ratio: 2/3; background: linear-gradient(135deg,#222,#000); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: rgba(255,255,255,0.2); }
+        .anime-card-poster img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+        .anime-card-poster .anime-play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #fff; background: rgba(0,0,0,0.35); opacity: 0; transition: 0.2s ease; }
+        .anime-card:hover .anime-play-overlay { opacity: 1; }
+        .anime-card-info { padding: 8px 10px; }
+        .anime-card-title { font-size: 0.8rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .anime-card-meta { font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+        /* GAME PLAYER PAGE */
+        .gameplay-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); margin-bottom: 12px; flex-wrap: wrap; }
+        .gameplay-back-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.06); padding: 8px 20px; border-radius: 50px; color: #fff; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s ease; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 6px; }
+        .gameplay-actions { display: flex; align-items: center; gap: 8px; }
+        /* The fluid background is hidden (and so paused) while a game is open, leaving its memory and GPU time to the game. */
+        body.yy-playing #liquidEtherBg { display: none; }
+        .gameplay-back-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.15); }
+        .gameplay-title { font-weight: 600; font-size: 1.2rem; color: #fff; flex: 1; text-align: center; }
+        .gameplay-iframe-wrapper { width: 100%; height: 82vh; border-radius: 16px; overflow: hidden; background: #111; }
+        .gameplay-iframe-wrapper iframe { width: 100%; height: 100%; border: none; }
+
+        /* AI PAGE */
+        .ai-header { display: flex; align-items: center; gap: 12px; padding: 12px 0 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); margin-bottom: 16px; }
+        .ai-header h1 { font-size: 1.8rem; font-weight: 300; color: #fff; letter-spacing: 0.5px; }
+        .ai-header h1 span { background: linear-gradient(90deg, #000000 0%, #ffffff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .ai-header .badge { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.06); border-radius: 30px; padding: 2px 14px; font-size: 0.7rem; color: rgba(255,255,255,0.3); letter-spacing: 1px; }
+        .ai-chat-container { flex: 1; display: flex; flex-direction: column; gap: 16px; max-width: 800px; margin: 0 auto; width: 100%; }
+        .chat-messages { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 8px 0 20px 0; max-height: 55vh; overflow-y: auto; }
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+        .message { padding: 12px 16px; border-radius: 16px; max-width: 85%; word-wrap: break-word; line-height: 1.6; font-size: 0.95rem; animation: fadeIn 0.3s ease; }
+        .message.user { align-self: flex-end; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-bottom-right-radius: 4px; }
+        .message.bot { align-self: flex-start; background: rgba(255,255,255,0.02); border-left: 2px solid rgba(255,255,255,0.08); border-radius: 0 16px 16px 16px; max-width: 95%; }
+        .message.bot h1, .message.bot h2, .message.bot h3 { color: #fff; margin: 8px 0 4px 0; font-weight: 400; }
+        .message.bot h1 { font-size: 1.4rem; }
+        .message.bot h2 { font-size: 1.2rem; }
+        .message.bot h3 { font-size: 1.05rem; }
+        .message.bot ul, .message.bot ol { padding-left: 20px; margin: 6px 0; }
+        .message.bot li { margin: 2px 0; }
+        .message.bot code { background: rgba(255,255,255,0.05); padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9rem; }
+        .message.bot pre { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 6px 0; border: 1px solid rgba(255,255,255,0.04); }
+        .typing-indicator { display: none; align-self: flex-start; padding: 8px 16px; color: rgba(255,255,255,0.2); font-size: 0.9rem; letter-spacing: 2px; }
+        .typing-indicator.active { display: block; }
+        .suggestion-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px 0; }
+        .chip { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 30px; padding: 6px 16px; font-size: 0.8rem; color: rgba(255,255,255,0.4); cursor: pointer; transition: 0.2s; white-space: nowrap; }
+        .chip:hover { background: rgba(255,255,255,0.06); color: #fff; border-color: rgba(255,255,255,0.12); }
+        .input-area { display: flex; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 8px; }
+        .input-area input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 30px; padding: 12px 20px; color: #fff; font-size: 0.95rem; outline: none; transition: 0.2s; font-family: inherit; }
+        .input-area input::placeholder { color: rgba(255,255,255,0.15); }
+        .input-area input:focus { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); }
+        .input-area button { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 30px; padding: 0 24px; color: rgba(255,255,255,0.4); font-size: 0.9rem; cursor: pointer; transition: 0.2s; font-family: inherit; }
+        .input-area button:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+        /* MOBILE */
+        .mobile-bottom-nav { display: none; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 20; background: #000; backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.05); padding: 6px 4px; justify-content: space-around; overflow-x: auto; gap: 2px; }
+        .mobile-bottom-nav .nav-icon { display: flex; flex-direction: column; align-items: center; color: rgba(255,255,255,0.55); font-size: 0.5rem; text-decoration: none; padding: 4px 6px; border-radius: 10px; min-width: 40px; cursor: pointer; background: none; border: none; font-family: inherit; }
+        .mobile-bottom-nav .nav-icon svg { width: 20px; height: 20px; margin-bottom: 2px; display: block; }
+        .mobile-bottom-nav .nav-icon .yy-gear { display: flex; }
+        .mobile-bottom-nav .nav-icon.active { color: #ffffff; background: rgba(255,255,255,0.08); }
+
+        @media (max-width: 640px) {
+            .sidebar { display: none; }
+            :root { --tabstrip-h: 34px; --urlbar-h: 44px; }
+            .main-container { margin: var(--chrome-h) 0 80px 0; padding: 16px 16px 20px 16px; }
+            .mobile-bottom-nav { display: flex; }
+            .browser-bar { padding: 6px 12px; }
+            .browser-tabs { padding: 0 6px; }
+            .browser-tab { min-width: 84px; height: 28px; font-size: 0.68rem; padding: 0 6px 0 10px; gap: 6px; }
+            .webview-frame-wrapper { height: calc(100vh - var(--chrome-h) - 170px); }
+            .browser-bar .url-input { font-size: 0.75rem; padding: 4px 12px; }
+            .home-gradient-title { font-size: 2.8rem; }
+            .home-yin-yang-symbol { width: 36px; height: 36px; }
+            .home-nav-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+            .home-nav-item { font-size: 0.6rem; padding: 8px 2px; border-radius: 12px; }
+            .home-nav-item svg { width: 22px; height: 22px; }
+            .home-search-bar { padding: 14px 18px 14px 44px; font-size: 0.9rem; }
+            .home-search-icon { left: 16px; width: 16px; height: 16px; }
+            .game-header h1 { font-size: 1.6rem; }
+            .game-grid-container { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .game-card-thumb { height: 90px; }
+            .streaming-iframe-wrapper { height: 60vh; }
+            .gameplay-iframe-wrapper { height: 65vh; }
+            .gameplay-title { font-size: 1rem; }
+            .ai-header h1 { font-size: 1.4rem; }
+            .message { font-size: 0.85rem; max-width: 95%; }
+            .input-area input { font-size: 0.85rem; padding: 10px 16px; }
+            .input-area button { padding: 0 16px; font-size: 0.8rem; }
+            .chip { font-size: 0.7rem; padding: 4px 12px; }
+        }
+        @media (max-width: 420px) {
+            .home-gradient-title { font-size: 2.2rem; }
+            .home-nav-grid { grid-template-columns: repeat(3, 1fr); }
+            .home-nav-item:nth-child(7) { grid-column: span 1; }
+            .game-grid-container { grid-template-columns: 1fr 1fr; }
+        }
+        @media (min-width: 641px) { .mobile-bottom-nav { display: none; } }
+        @media (max-width: 500px) { .game-grid-container { grid-template-columns: 1fr 1fr; } }
+        /* USERS ONLINE */
+        .home-online { display: inline-flex; align-items: center; gap: 10px; margin: 28px auto 8px; padding: 8px 18px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.55); font-size: 0.8rem; letter-spacing: 0.5px; align-self: center; }
+        .home-online strong { color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .home-online-dot { width: 8px; height: 8px; border-radius: 50%; background: #3ddc84; box-shadow: 0 0 0 0 rgba(61,220,132,0.6); animation: onlinePulse 2s infinite; }
+        @keyframes onlinePulse { 0% { box-shadow: 0 0 0 0 rgba(61,220,132,0.55); } 70% { box-shadow: 0 0 0 8px rgba(61,220,132,0); } 100% { box-shadow: 0 0 0 0 rgba(61,220,132,0); } }
+
+        /* INTRO */
+        body.intro-active { overflow: hidden; }
+        #intro { position: fixed; inset: 0; z-index: 1000; background: radial-gradient(ellipse at center, #1a1a1a 0%, #050505 70%); display: flex; align-items: center; justify-content: center; overflow: hidden; transition: opacity 0.8s ease, visibility 0.8s ease; }
+        #intro.intro-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .intro-stage { position: relative; width: 100%; height: 160px; display: flex; align-items: center; justify-content: center; }
+        .intro-line { position: absolute; top: 50%; height: 2px; width: 0; background: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.8), 0 0 30px rgba(255,255,255,0.4); transform: translateY(-50%); }
+        .intro-line.left { right: 50%; }
+        .intro-line.right { left: 50%; }
+        .intro-yy { position: absolute; top: 50%; width: 110px; height: 110px; margin-top: -55px; z-index: 2; }
+        .intro-yy svg { width: 100%; height: 100%; display: block; }
+        .intro-yy.white { left: 50%; margin-left: -110px; transform: translateX(-60vw) rotate(-720deg); filter: drop-shadow(0 0 14px rgba(255,255,255,0.35)); }
+        .intro-yy.black { left: 50%; margin-left: 0; transform: translateX(60vw) rotate(720deg); filter: drop-shadow(0 0 14px rgba(255,255,255,0.25)); }
+        #intro.play .intro-yy.white { animation: yyLeftIn 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        #intro.play .intro-yy.black { animation: yyRightIn 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        #intro.play .intro-flash { animation: yyFlash 0.7s ease-out 1.5s forwards; }
+        #intro.play .intro-line { animation: lineGrow 1.1s cubic-bezier(0.65, 0, 0.35, 1) 1.65s forwards; }
+        #intro.play .intro-continue { animation: continueIn 0.7s ease 2.9s forwards; }
+        @keyframes yyLeftIn { to { transform: translateX(0) rotate(0deg); } }
+        @keyframes yyRightIn { to { transform: translateX(0) rotate(0deg); } }
+        @keyframes lineGrow { to { width: 50vw; } }
+        @keyframes yyFlash { 0% { opacity: 0; transform: scale(0.2); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(2.4); } }
+        @keyframes continueIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; visibility: visible; transform: translate(-50%, 0); } }
+        .intro-flash { position: absolute; top: 50%; left: 50%; width: 80px; height: 80px; margin: -40px 0 0 -40px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 70%); opacity: 0; z-index: 3; pointer-events: none; }
+        .intro-continue { position: absolute; left: 50%; top: calc(50% + 110px); transform: translate(-50%, 12px); opacity: 0; visibility: hidden; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.6); border-radius: 50px; padding: 12px 42px; font-family: 'Poppins', sans-serif; font-size: 0.85rem; letter-spacing: 4px; text-transform: uppercase; transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease; }
+        .intro-continue:hover, .intro-continue:focus-visible { background: #fff; color: #000; box-shadow: 0 0 24px rgba(255,255,255,0.45); outline: none; }
+        @media (max-width: 640px) { .intro-yy { width: 80px; height: 80px; margin-top: -40px; } .intro-yy.white { margin-left: -80px; } .intro-continue { top: calc(50% + 90px); } }
+        @media (prefers-reduced-motion: reduce) { #intro.play .intro-yy, #intro.play .intro-line, #intro.play .intro-flash, #intro.play .intro-continue { animation-duration: 0.01s; animation-delay: 0s; } }
+    </style>
+</head>
+<body>
+    <!-- INTRO: two yin yangs meet in the middle, a white line draws out, then Continue -->
+    <div id="intro" role="dialog" aria-label="Welcome to ying / yang">
+        <div class="intro-stage">
+            <div class="intro-line left"></div>
+            <div class="intro-line right"></div>
+            <div class="intro-yy white">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="48" fill="white"/>
+                    <path d="M50,2 A48,48 0 0,1 50,98 A24,24 0 0,1 50,50 A24,24 0 0,0 50,2" fill="black"/>
+                    <circle cx="50" cy="26" r="10" fill="black"/>
+                    <circle cx="50" cy="74" r="10" fill="white"/>
+                    <circle cx="50" cy="26" r="3" fill="white"/>
+                    <circle cx="50" cy="74" r="3" fill="black"/>
+                    <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2"/>
+                </svg>
+            </div>
+            <div class="intro-yy black">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="48" fill="black"/>
+                    <path d="M50,2 A48,48 0 0,1 50,98 A24,24 0 0,1 50,50 A24,24 0 0,0 50,2" fill="white"/>
+                    <circle cx="50" cy="26" r="10" fill="white"/>
+                    <circle cx="50" cy="74" r="10" fill="black"/>
+                    <circle cx="50" cy="26" r="3" fill="black"/>
+                    <circle cx="50" cy="74" r="3" fill="white"/>
+                    <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2"/>
+                </svg>
+            </div>
+            <div class="intro-flash"></div>
+        </div>
+        <button type="button" class="intro-continue" id="introContinue">Continue</button>
+    </div>
+    <script>
+        // Show intro once per browser session; skip it on reloads within the same tab.
+        (function () {
+            var seen = false;
+            try { seen = sessionStorage.getItem('yyIntroSeen') === '1'; } catch (e) {}
+            var intro = document.getElementById('intro');
+            if (seen) { intro.remove(); return; }
+            document.body.classList.add('intro-active');
+            requestAnimationFrame(function () { intro.classList.add('play'); });
+            document.getElementById('introContinue').addEventListener('click', function () {
+                try { sessionStorage.setItem('yyIntroSeen', '1'); } catch (e) {}
+                intro.classList.add('intro-hidden');
+                document.body.classList.remove('intro-active');
+                setTimeout(function () { intro.remove(); }, 900);
+            });
+        })();
+    </script>
+    <!-- SVG FILTER FOR GLASS DISTORTION -->
+    <svg style="display: none">
+        <filter id="glass-distortion">
+            <feTurbulence type="turbulence" baseFrequency="0.008" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="77" />
+        </filter>
+    </svg>
+
+    <div id="liquidEtherBg" aria-hidden="true"></div>
+
+    <!-- FAKE BROWSER TAB STRIP (one tab per page/search/game opened) -->
+    <div class="browser-tabs" role="tablist" aria-label="Open tabs">
+        <div class="browser-tabs-list" id="browserTabsList"></div>
+        <button type="button" class="browser-tab-new" id="browserTabNew" title="New tab" aria-label="New tab">+</button>
+    </div>
+
+    <!-- FAKE BROWSER ADDRESS BAR -->
+    <div class="browser-bar">
+        <span class="lock-icon">🔒</span>
+        <input type="text" class="url-input" id="urlBar" value="https://ying-yang-proxy.net/" placeholder="Search or enter address...">
+        <div class="nav-buttons"><span>↻</span></div>
+    </div>
+
+    <!-- SIDEBAR (Movies icon replaced with Anime/Streaming) -->
+    <div class="sidebar">
+        <div class="sidebar-icon yinyang"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#fff"/><path d="M50,4 A46,46 0 0,1 50,96 A23,23 0 0,1 50,50 A23,23 0 0,0 50,4" fill="#000"/><circle cx="50" cy="27" r="7" fill="#fff"/><circle cx="50" cy="73" r="7" fill="#000"/><circle cx="50" cy="50" r="46" fill="none" stroke="#fff" stroke-width="3"/></svg></div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-icon active" data-page="home" title="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg><span class="label">Home</span></div>
+        <div class="sidebar-icon" data-page="games" title="Games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="4"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg><span class="label">Games</span></div>
+        <div class="sidebar-icon" data-page="ai" title="AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4.5"/><circle cx="12" cy="3.5" r="1"/><circle cx="9" cy="13.5" r="1" fill="currentColor"/><circle cx="15" cy="13.5" r="1" fill="currentColor"/><path d="M10 17h4M2 13v2M22 13v2"/></svg><span class="label">AI</span>
+        </div>
+        <!-- MOVIES replaced with ANIME -->
+        <div class="sidebar-icon" data-page="anime" title="Anime & Streaming"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="13" rx="2.5"/><path d="m10 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8M12 17.5V21"/></svg><span class="label">Anime</span></div>
+        <div class="sidebar-icon" data-page="music" title="Music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><span class="label">Music</span></div>
+        <div class="sidebar-icon" data-page="chat" title="Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5z"/></svg><span class="label">Chat</span></div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-icon" data-page="add" title="Add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="label">Add</span></div>
+        <div class="sidebar-icon" data-page="allapps" title="All Apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span class="label">All Apps</span></div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-icon" data-page="discord" title="Discord"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 7.5c2.3-.7 4.7-.7 7 0M8.5 16.5c2.3.7 4.7.7 7 0"/><path d="M15.5 7.5 16.5 5c1.8.4 3.2 1.1 4.3 2 1.2 2.6 1.8 5.4 1.7 8.6-1.3 1.2-2.8 2-4.5 2.5l-1.2-1.8M8.5 7.5 7.5 5c-1.8.4-3.2 1.1-4.3 2-1.2 2.6-1.8 5.4-1.7 8.6 1.3 1.2 2.8 2 4.5 2.5l1.2-1.8"/><circle cx="9" cy="12.5" r="1.2" fill="currentColor"/><circle cx="15" cy="12.5" r="1.2" fill="currentColor"/></svg><span class="label">Discord</span></div>
+        <div class="sidebar-icon yy-settings-btn" data-open-settings role="button" tabindex="0" title="Settings" aria-label="Settings"><span class="yy-gear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="label">Settings</span></div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-container">
+        <!-- HOME -->
+        <div class="page active" id="page-home">
+            <div class="home-header-label">⚬ ying yang proxy ⚬</div>
+            <div class="home-main-title">
+                <span class="home-yin-yang-symbol">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="48" fill="white" stroke="white" stroke-width="2"/>
+                        <path d="M50,2 A48,48 0 0,1 50,98 A24,24 0 0,1 50,50 A24,24 0 0,0 50,2" fill="black"/>
+                        <circle cx="50" cy="26" r="10" fill="black"/>
+                        <circle cx="50" cy="74" r="10" fill="white"/>
+                        <circle cx="50" cy="26" r="3" fill="white"/>
+                        <circle cx="50" cy="74" r="3" fill="black"/>
+                        <circle cx="50" cy="50" r="48" fill="none" stroke="white" stroke-width="1.5" opacity="0.15"/>
+                    </svg>
+                </span>
+                <span class="home-gradient-title">ying / yang</span>
+            </div>
+            <div class="home-sub-title">unblocked</div>
+
+            <!-- GLASS ICONS GRID (Movies replaced with Anime/Streaming) -->
+            <div class="glass-icons-grid">
+                <div class="glass-icon" onclick="navigateTo('home')">
+                    <div class="glass-filter"></div>
+                    <div class="glass-overlay"></div>
+                    <div class="glass-specular"></div>
+                    <div class="glass-content">
+                        <i class="fas fa-home"></i>
+                    </div>
+                </div>
+                <div class="glass-icon" onclick="navigateTo('games')">
+                    <div class="glass-filter"></div>
+                    <div class="glass-overlay"></div>
+                    <div class="glass-specular"></div>
+                    <div class="glass-content">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                </div>
+                <div class="glass-icon" onclick="navigateTo('ai')">
+                    <div class="glass-filter"></div>
+                    <div class="glass-overlay"></div>
+                    <div class="glass-specular"></div>
+                    <div class="glass-content">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                </div>
+                <!-- ANIME icon -->
+                <div class="glass-icon" onclick="navigateTo('anime')">
+                    <div class="glass-filter"></div>
+                    <div class="glass-overlay"></div>
+                    <div class="glass-specular"></div>
+                    <div class="glass-content">
+                        <i class="fas fa-japanese-flag"></i>
+                    </div>
+                </div>
+                <div class="glass-icon" onclick="navigateTo('music')">
+                    <div class="glass-filter"></div>
+                    <div class="glass-overlay"></div>
+                    <div class="glass-specular"></div>
+                    <div class="glass-content">
+                        <i class="fas fa-music"></i>
+                    </div>
+                </div>
+                <div class="glass-icon" onclick="navigateTo('chat')">
+                    <div class="glass-filter"></div>
+                    <div class="glass-overlay"></div>
+                    <div class="glass-specular"></div>
+                    <div class="glass-content">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="home-search-wrapper">
+                <input type="text" class="home-search-bar" id="homeSearchInput" placeholder="Search for anything!">
+                <svg class="home-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </div>
+            <div class="home-nav-grid">
+                <div class="home-nav-item" data-page="games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="4"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg>Games</div>
+                <div class="home-nav-item" data-page="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4.5"/><circle cx="12" cy="3.5" r="1"/><circle cx="9" cy="13.5" r="1" fill="currentColor"/><circle cx="15" cy="13.5" r="1" fill="currentColor"/><path d="M10 17h4M2 13v2M22 13v2"/></svg>AI</div>
+                <!-- ANIME nav item -->
+                <div class="home-nav-item" data-page="anime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="13" rx="2.5"/><path d="m10 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8M12 17.5V21"/></svg>Anime</div>
+                <div class="home-nav-item" data-page="music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Music</div>
+                <div class="home-nav-item" data-page="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5z"/></svg>Chat</div>
+                <div class="home-nav-item special" data-page="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</div>
+                <div class="home-nav-item special" data-page="allapps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>All Apps</div>
+            </div>
+            <div class="home-discord-banner">⚬ <strong>Join our Discord</strong> for more links ⚬</div>
+            <div class="home-testimonials">
+                <div class="home-testimonial"><div class="author">snake • Vortex Jr. Moderator</div><div class="text">"ying/yang is prob one of the best proxy/game sites I've ever seen"</div></div>
+                <div class="home-testimonial"><div class="author">Evicty • Owner of Vortex Chat</div><div class="text">"ying/yang is one of, if not the most modern proxy site. It has all the latest features, good speeds, smooth UI, and overall just works"</div></div>
+            </div>
+            <div class="home-online" id="homeOnline" aria-live="polite">
+                <span class="home-online-dot"></span>
+                <span><strong id="homeOnlineCount">–</strong> <span id="homeOnlineLabel">users online</span></span>
+            </div>
+        </div>
+
+        <!-- GAME LIBRARY -->
+        <div class="page" id="page-games">
+            <div class="game-header">
+                <h1>🎮 <span class="home-gradient-title">Game Library</span></h1>
+                <div class="game-tabs">
+                    <button class="game-tab-btn active" onclick="switchGameTab('games')">Games</button>
+                    <button class="game-tab-btn" onclick="switchGameTab('movies')">Movies</button>
+                </div>
+            </div>
+            <div class="game-controls">
+                <input type="text" class="game-search-bar" id="gameSearchBar" placeholder="Search games..." onkeyup="filterGameItems()">
+            </div>
+            <div class="game-grid-container" id="gameGrid"></div>
+            <!-- Games from the Lumin SDK (headless mode) are rendered here, below the built-in list -->
+            <div class="game-grid-container lumin-games" id="my-games"></div>
+            <div class="lumin-status hidden" id="luminStatus"></div>
+            <div class="lumin-more-wrap hidden" id="luminMoreWrap"><button class="game-tab-btn" id="luminMoreBtn">Show more games</button></div>
+            <div class="game-grid-container hidden" id="movieGrid"></div>
+            <div class="game-footer">Press <b>ESC</b> to Panic Swap to Google Drive</div>
+        </div>
+
+        <!-- ANIME & STREAMING PAGE (replaces movies) -->
+        <div class="page" id="page-anime">
+            <div style="padding:12px 0 8px 0;border-bottom:1px solid rgba(255,255,255,0.04);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <h2 style="font-weight:300;color:#fff;font-size:1.5rem;">
+                    <span style="background:linear-gradient(90deg,#000000 0%,#ffffff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;">🎌 Anime & Streaming</span>
+                </h2>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button onclick="loadAnimeSite('https://dulo.gd/')" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:30px;padding:6px 16px;color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.75rem;">Dulo</button>
+                    <button onclick="loadAnimeSite('https://lookmovie.io/')" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:30px;padding:6px 16px;color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.75rem;">Lookmovie</button>
+                </div>
+            </div>
+
+            <!-- Search bar -->
+            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+                <input type="text" id="animeSearchInput" placeholder="🔍 Search anime (e.g. Frieren, One Piece, Chainsaw Man)..." style="flex:1;min-width:200px;padding:12px 20px;border-radius:50px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.5);color:#fff;font-size:0.9rem;font-family:'Poppins',sans-serif;">
+                <button id="animeSearchBtn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:30px;padding:10px 22px;color:#fff;cursor:pointer;font-size:0.85rem;">Search</button>
+            </div>
+
+            <!-- Now-playing hero -->
+            <div class="anime-hero">
+                <div class="anime-hero-poster" id="animeHeroPoster">🎬</div>
+                <div class="anime-hero-info">
+                    <h3 id="animeHeroTitle" style="color:#fff;font-weight:500;font-size:1.2rem;margin:0;">Frieren: Beyond Journey's End</h3>
+                    <div id="animeHeroMeta" style="color:rgba(255,255,255,0.4);font-size:0.8rem;"></div>
+                    <div id="animeHeroGenres" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+                    <div id="animeHeroSynopsis" style="color:rgba(255,255,255,0.5);font-size:0.8rem;line-height:1.5;"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:auto;">
+                        <div id="animeNowPlaying" style="color:rgba(255,255,255,0.6);font-size:0.8rem;">Loading Frieren: Beyond Journey's End...</div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <button id="animePrevEp" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:30px;padding:6px 14px;color:#fff;cursor:pointer;font-size:0.8rem;">◀ Prev</button>
+                            <input type="number" id="animeEpisodeInput" min="1" value="1" style="width:64px;padding:6px 10px;border-radius:30px;border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.5);color:#fff;font-size:0.8rem;text-align:center;">
+                            <button id="animeNextEp" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:30px;padding:6px 14px;color:#fff;cursor:pointer;font-size:0.8rem;">Next ▶</button>
+                            <button id="animeSubBtn" class="anime-lang-btn active" data-lang="sub" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);border-radius:30px;padding:6px 16px;color:#fff;cursor:pointer;font-size:0.8rem;">Sub</button>
+                            <button id="animeDubBtn" class="anime-lang-btn" data-lang="dub" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:30px;padding:6px 16px;color:rgba(255,255,255,0.6);cursor:pointer;font-size:0.8rem;">Dub</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="streaming-iframe-wrapper">
+                <iframe id="animeFrame" src="about:blank" allowfullscreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media"></iframe>
+            </div>
+
+            <!-- Genre filter -->
+            <div id="animeGenreChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;"></div>
+
+            <!-- Browse grid (Popular by default, search results when searching) -->
+            <div class="anime-section-title">
+                <span id="animeGridTitle">🔥 Popular</span>
+                <span id="animeBackLink" class="anime-back-link hidden">← Back to Popular</span>
+            </div>
+            <div id="animeBrowseGrid" class="anime-grid"></div>
+        </div>
+
+
+        <!-- GAME PLAYER (in-site) -->
+        <div class="page" id="page-gameplay">
+            <div class="gameplay-header">
+                <button class="gameplay-back-btn" id="gameplayBackBtn">← Back to Games</button>
+                <div class="gameplay-title" id="gameplayTitle">Game</div>
+                <div class="gameplay-actions">
+                    <button class="gameplay-back-btn hidden" id="gameplayModeBtn" type="button">…</button>
+                    <button class="gameplay-back-btn" id="gameplayHomeBtn">🏠 Home</button>
+                </div>
+            </div>
+            <div class="gameplay-iframe-wrapper">
+                <iframe id="gameplayFrame" src="about:blank" allowfullscreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" sandbox="allow-scripts allow-forms allow-popups allow-modals allow-same-origin allow-pointer-lock"></iframe>
+            </div>
+        </div>
+
+        <!-- IN-SITE SEARCH / WEB VIEW (home search + address bar open here) -->
+        <div class="page" id="page-search">
+            <div class="webview-header">
+                <div class="webview-title" id="webviewTitle"></div>
+                <a class="webview-external" id="webviewExternal" href="#" target="_blank" rel="noopener noreferrer">Open in new window ↗</a>
+            </div>
+            <div class="webview-frame-wrapper">
+                <iframe id="webviewFrame" src="about:blank" title="Search results" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-same-origin allow-pointer-lock allow-downloads"></iframe>
+            </div>
+        </div>
+
+        <!-- AI PAGE -->
+        <div class="page" id="page-ai">
+            <div class="ai-header"><h1><span>ying yang</span> AI</h1><span class="badge">assistant</span></div>
+            <div class="ai-chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot"><strong>What can I help you with today?</strong></div>
+                    <div class="suggestion-chips" id="suggestionChips">
+                        <span class="chip" data-prompt="Explain quantum computing in simple terms">Quantum computing</span>
+                        <span class="chip" data-prompt="Python JSON parser from an API endpoint">Python JSON parser</span>
+                        <span class="chip" data-prompt="Creative startup ideas in the AI space">Startup ideas</span>
+                        <span class="chip" data-prompt="Dark sci-fi story about a rogue AI">Sci-fi story</span>
+                        <span class="chip" data-prompt="Play Naruto">Play Naruto</span>
+                    </div>
+                </div>
+                <div class="typing-indicator" id="typingIndicator">● ● ●</div>
+                <div class="input-area">
+                    <input type="text" id="chatInput" placeholder="Ask me anything..." autofocus>
+                    <button id="sendBtn">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PLACEHOLDER PAGES -->
+        <div class="page" id="page-music"><h2 style="color:#fff;font-weight:300;margin-top:40px;text-align:center;">🎵 Music</h2><p style="color:rgba(255,255,255,0.2);text-align:center;">Coming soon</p></div>
+        <!-- COMMUNITY CHAT (login → live chat room; logic in community-chat.js) -->
+        <div class="page" id="page-chat">
+            <div class="cc-shell">
+                <!-- Login: claim a unique username -->
+                <div class="cc-login" id="ccLogin">
+                    <form class="cc-login-card" id="ccLoginForm" autocomplete="off">
+                        <button type="button" class="cc-owner-login-btn" id="ccOwnerLoginBtn" title="Owner" aria-label="Owner login" aria-pressed="false">👑</button>
+                        <div class="cc-login-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5c0 4.7-4 8.5-9 8.5-1.2 0-2.4-.2-3.5-.6L4 21l1.8-4.5C4.3 15 3 13.4 3 11.5 3 6.8 7 3 12 3s9 3.8 9 8.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8.5" cy="11.5" r="1.1" fill="currentColor"/><circle cx="12" cy="11.5" r="1.1" fill="currentColor"/><circle cx="15.5" cy="11.5" r="1.1" fill="currentColor"/></svg>
+                        </div>
+                        <h2 id="ccAuthTitle">Welcome back!</h2>
+                        <p class="cc-login-sub" id="ccAuthSub">Log in to start chatting with everyone online.</p>
+                        <div class="cc-auth-tabs" role="tablist">
+                            <button type="button" class="cc-auth-tab active" data-auth="login" role="tab">Log In</button>
+                            <button type="button" class="cc-auth-tab" data-auth="signup" role="tab">Sign Up</button>
+                        </div>
+                        <div>
+                            <label for="ccLoginInput">USERNAME</label>
+                            <input id="ccLoginInput" maxlength="20" placeholder="e.g. frieren_fan" spellcheck="false" autocomplete="username">
+                            <div class="cc-hint cc-signup-only hidden">2–20 characters: letters, numbers, spaces, _ or .</div>
+                        </div>
+                        <div>
+                            <label for="ccPasswordInput">PASSWORD</label>
+                            <div class="cc-pass-wrap">
+                                <input id="ccPasswordInput" type="password" maxlength="72" placeholder="Your password" autocomplete="current-password">
+                                <button type="button" class="cc-pass-toggle" data-target="ccPasswordInput" aria-label="Show password">👁</button>
+                            </div>
+                            <div class="cc-hint cc-signup-only hidden">At least 6 characters.</div>
+                        </div>
+                        <div class="cc-reset-only hidden">
+                            <label for="ccResetCode">RESET CODE</label>
+                            <input id="ccResetCode" maxlength="12" placeholder="e.g. ABCD-EFGH" spellcheck="false" autocomplete="one-time-code">
+                            <div class="cc-hint">Ask the owner or a mod for a one-time reset code. It works for 60 minutes.</div>
+                        </div>
+                        <div class="cc-newpass-only hidden">
+                            <label for="ccPasswordConfirm">CONFIRM PASSWORD</label>
+                            <div class="cc-pass-wrap">
+                                <input id="ccPasswordConfirm" type="password" maxlength="72" placeholder="Type it again" autocomplete="new-password">
+                                <button type="button" class="cc-pass-toggle" data-target="ccPasswordConfirm" aria-label="Show password">👁</button>
+                            </div>
+                        </div>
+                        <div class="cc-error hidden" id="ccLoginError" role="alert"></div>
+                        <button type="submit" class="cc-btn cc-btn-primary" id="ccLoginBtn">Log In</button>
+                        <button type="button" class="cc-link-btn" id="ccLoginModeToggle">Need an account? Sign up</button>
+                        <button type="button" class="cc-link-btn" id="ccResetToggle">Forgot your password? Use a reset code</button>
+                    </form>
+                </div>
+
+                <!-- Chat room -->
+                <div class="cc-chat hidden" id="ccChat">
+                    <header class="cc-header">
+                        <div class="cc-channel"><span class="cc-hash">#</span>general<span class="cc-online" id="ccOnline"><i></i>0 online</span></div>
+                        <div class="cc-me" id="ccMe" title="Your profile"></div>
+                        <button class="cc-icon-btn cc-people-btn cc-mod-btn hidden" id="ccModBtn" title="Mod tools" aria-label="Mod tools">🛡️<span class="cc-count-badge hidden" id="ccModBadge">0</span></button>
+                        <button class="cc-icon-btn cc-people-btn" id="ccPeopleBtn" title="Online & friends" aria-label="Online and friends">👥<span class="cc-count-badge hidden" id="ccPeopleBadge">0</span></button>
+                        <button class="cc-icon-btn" id="ccSettingsBtn" title="Settings" aria-label="Settings">⚙️</button>
+                    </header>
+                    <div class="cc-messages" id="ccMessages">
+                        <div class="cc-history-status" id="ccHistoryStatus"></div>
+                        <div id="ccMessageList"></div>
+                    </div>
+                    <button class="cc-jump hidden" id="ccJump">New messages ↓</button>
+                    <div class="cc-typing" id="ccTyping" aria-live="polite"></div>
+                    <div class="cc-composer-wrap">
+                        <div class="cc-composer-error hidden" id="ccComposerError" role="alert"></div>
+                        <div class="cc-room-notice hidden" id="ccRoomNotice"></div>
+                        <div class="cc-reply-bar hidden" id="ccReplyBar"></div>
+                        <div class="cc-image-preview hidden" id="ccImagePreview"></div>
+                        <div class="cc-composer">
+                            <button class="cc-icon-btn cc-upload-btn" id="ccUploadBtn" title="Upload a photo or GIF (Verified only)" aria-label="Upload a photo">＋</button>
+                            <input type="file" id="ccFileInput" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+                            <textarea id="ccInput" rows="1" maxlength="4000" placeholder="Message #general"></textarea>
+                            <button class="cc-icon-btn cc-gif-btn" id="ccGifBtn" title="Send a GIF (Verified only)" aria-label="Send a GIF">GIF</button>
+                            <button class="cc-icon-btn" id="ccEmojiBtn" title="Emoji" aria-label="Emoji">😊</button>
+                            <button class="cc-icon-btn cc-send-btn" id="ccSendBtn" title="Send" aria-label="Send">➤</button>
+                        </div>
+                        <div class="cc-emoji-picker hidden" id="ccEmojiPicker"></div>
+                    </div>
+
+                    <!-- Private messages with a friend (covers #general while open) -->
+                    <div class="cc-dm hidden" id="ccDm" role="dialog" aria-label="Private messages">
+                        <header class="cc-header">
+                            <button class="cc-icon-btn" id="ccDmBack" title="Back to #general" aria-label="Back to #general">←</button>
+                            <div class="cc-dm-who" id="ccDmWho"></div>
+                        </header>
+                        <div class="cc-messages" id="ccDmMessages">
+                            <div class="cc-history-status" id="ccDmStatus"></div>
+                            <div id="ccDmList"></div>
+                        </div>
+                        <div class="cc-composer-wrap">
+                            <div class="cc-composer-error hidden" id="ccDmError" role="alert"></div>
+                            <div class="cc-reply-bar hidden" id="ccDmReplyBar"></div>
+                            <div class="cc-composer">
+                                <textarea id="ccDmInput" rows="1" maxlength="2000" placeholder="Send a private message"></textarea>
+                                <button class="cc-icon-btn cc-send-btn" id="ccDmSend" title="Send" aria-label="Send">➤</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Who's online, friends and (for the owner & mods) banned users -->
+                <aside class="cc-side hidden" id="ccSide" aria-label="Online and friends">
+                    <div class="cc-side-tabs" role="tablist">
+                        <button type="button" class="cc-side-tab active" data-tab="online" role="tab">Online <span id="ccOnlineCount">0</span></button>
+                        <button type="button" class="cc-side-tab" data-tab="friends" role="tab">Friends <span class="cc-count-badge hidden" id="ccFriendsBadge">0</span></button>
+                        <button type="button" class="cc-side-tab hidden" data-tab="banned" role="tab" id="ccBannedTab">Banned</button>
+                        <button type="button" class="cc-icon-btn cc-side-close" id="ccSideClose" aria-label="Close">✕</button>
+                    </div>
+                    <div class="cc-side-body" id="ccSideBody"></div>
+                </aside>
+            </div>
+
+        </div>
+        <div class="page" id="page-add"><h2 style="color:#fff;font-weight:300;margin-top:40px;text-align:center;">➕ Add</h2><p style="color:rgba(255,255,255,0.2);text-align:center;">Coming soon</p></div>
+        <div class="page" id="page-allapps"><h2 style="color:#fff;font-weight:300;margin-top:40px;text-align:center;">📦 All Apps</h2><p style="color:rgba(255,255,255,0.2);text-align:center;">Coming soon</p></div>
+        <div class="page" id="page-discord"><h2 style="color:#fff;font-weight:300;margin-top:40px;text-align:center;">💠 Discord</h2><p style="color:rgba(255,255,255,0.2);text-align:center;">Coming soon</p></div>
+    </div>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <div class="mobile-bottom-nav">
+        <button class="nav-icon active" data-page="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>home</button>
+        <button class="nav-icon" data-page="games"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="4"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg>games</button>
+        <button class="nav-icon" data-page="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4.5"/><circle cx="12" cy="3.5" r="1"/><circle cx="9" cy="13.5" r="1" fill="currentColor"/><circle cx="15" cy="13.5" r="1" fill="currentColor"/><path d="M10 17h4M2 13v2M22 13v2"/></svg>ai</button>
+        <!-- ANIME mobile icon -->
+        <button class="nav-icon" data-page="anime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="13" rx="2.5"/><path d="m10 8.5 4.5 2.5-4.5 2.5z"/><path d="M8 21h8M12 17.5V21"/></svg>anime</button>
+        <button class="nav-icon" data-page="music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>music</button>
+        <button class="nav-icon" data-page="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5z"/></svg>chat</button>
+        <button class="nav-icon" data-page="allapps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>apps</button>
+        <button class="nav-icon yy-settings-btn" data-open-settings aria-label="Settings"><span class="yy-gear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>settings</button>
+    </div>
+
+    <script>
+        // ----- NAVIGATION -----
+        function navigateTo(pageId) {
+            const wasOnGameplay = document.getElementById('page-gameplay').classList.contains('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById('page-' + pageId);
+            if (target) target.classList.add('active');
+            document.body.classList.toggle('yy-playing', pageId === 'gameplay');
+            if (wasOnGameplay && pageId !== 'gameplay') {
+                clearGameplay();
+            }
+            document.querySelectorAll('.sidebar-icon').forEach(el => {
+                el.classList.remove('active');
+                if (el.dataset.page === pageId) el.classList.add('active');
+            });
+            document.querySelectorAll('.mobile-bottom-nav .nav-icon').forEach(el => {
+                el.classList.remove('active');
+                if (el.dataset.page === pageId) el.classList.add('active');
+            });
+            document.getElementById('urlBar').value = 'https://ying-yang-proxy.net/' + pageId;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            syncTabForPage(pageId);
+        }
+
+        // ----- FAKE BROWSER TABS -----
+        // Every page, search or game the user opens gets its own tab in the strip above the
+        // address bar. Plain pages reuse an existing tab for the same page; searches, websites
+        // and games always open a fresh tab.
+        const PAGE_TAB_INFO = {
+            home: { icon: '☯', title: 'Home' },
+            games: { icon: '🎮', title: 'Games' },
+            ai: { icon: '🤖', title: 'AI' },
+            anime: { icon: '🎌', title: 'Anime' },
+            music: { icon: '🎵', title: 'Music' },
+            chat: { icon: '💬', title: 'Chat' },
+            add: { icon: '➕', title: 'Add' },
+            allapps: { icon: '📦', title: 'All Apps' },
+            discord: { icon: '💠', title: 'Discord' }
+        };
+        let browserTabs = [];
+        let activeTabId = null;
+        let tabIdCounter = 0;
+        let switchingTabs = false;   // true while a tab click is replaying its page (don't create tabs)
+        let pendingTab = null;       // details for the next navigateTo() that should open a fresh tab
+        let forceNewPageTab = false; // "+" button: always open a new Home tab
+
+        function getActiveTab() { return browserTabs.find(t => t.id === activeTabId) || null; }
+
+        function syncTabForPage(pageId) {
+            if (switchingTabs) return;
+            if (pendingTab) {
+                const info = pendingTab;
+                pendingTab = null;
+                addTab(Object.assign({ pageId }, info));
+                return;
+            }
+            if (pageId === 'gameplay' || pageId === 'search') return;
+            const active = getActiveTab();
+            let tab = (!forceNewPageTab && active && active.type === 'page' && active.pageId === pageId) ? active : null;
+            if (!tab && !forceNewPageTab) tab = browserTabs.find(t => t.type === 'page' && t.pageId === pageId);
+            forceNewPageTab = false;
+            if (tab) { activeTabId = tab.id; renderTabs(); return; }
+            const meta = PAGE_TAB_INFO[pageId] || { icon: '📄', title: pageId };
+            addTab({ type: 'page', pageId, icon: meta.icon, title: pageId === 'games' && currentGameTab === 'movies' ? 'Movies' : meta.title });
+        }
+
+        function addTab(tab) {
+            tab.id = ++tabIdCounter;
+            browserTabs.push(tab);
+            activeTabId = tab.id;
+            renderTabs();
+        }
+
+        function renderTabs() {
+            const list = document.getElementById('browserTabsList');
+            list.innerHTML = '';
+            browserTabs.forEach(tab => {
+                const el = document.createElement('div');
+                el.className = 'browser-tab' + (tab.id === activeTabId ? ' active' : '');
+                el.setAttribute('role', 'tab');
+                el.setAttribute('aria-selected', tab.id === activeTabId ? 'true' : 'false');
+                el.title = tab.title;
+                const icon = document.createElement('span');
+                icon.className = 'tab-icon';
+                icon.textContent = tab.icon;
+                const title = document.createElement('span');
+                title.className = 'tab-title';
+                title.textContent = tab.title;
+                const close = document.createElement('button');
+                close.type = 'button';
+                close.className = 'tab-close';
+                close.setAttribute('aria-label', 'Close tab');
+                close.textContent = '×';
+                close.addEventListener('click', (e) => { e.stopPropagation(); closeTab(tab.id); });
+                el.addEventListener('click', () => activateTab(tab.id));
+                el.addEventListener('auxclick', (e) => { if (e.button === 1) { e.preventDefault(); closeTab(tab.id); } });
+                el.append(icon, title, close);
+                list.appendChild(el);
+            });
+            const activeEl = list.querySelector('.browser-tab.active');
+            if (activeEl) activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        }
+
+        // Re-open whatever a tab was showing. Goes through window.navigateTo so other
+        // scripts' navigation hooks (e.g. community chat) still run.
+        function activateTab(id) {
+            const tab = browserTabs.find(t => t.id === id);
+            if (!tab) return;
+            const alreadyActive = tab.id === activeTabId;
+            activeTabId = tab.id;
+            renderTabs();
+            if (alreadyActive) return;
+            switchingTabs = true;
+            try {
+                if (tab.type === 'gameplay') {
+                    showGameplay(tab.url, tab.title, tab.backTo);
+                    window.navigateTo('gameplay');
+                } else if (tab.type === 'search') {
+                    showWebview(tab);
+                    window.navigateTo('search');
+                } else {
+                    if (tab.pageId === 'games' && tab.gameTab && tab.gameTab !== currentGameTab) switchGameTab(tab.gameTab);
+                    window.navigateTo(tab.pageId);
+                }
+            } finally {
+                switchingTabs = false;
+            }
+            if (tab.type === 'search') document.getElementById('urlBar').value = tab.url;
+        }
+
+        function closeTab(id) {
+            const idx = browserTabs.findIndex(t => t.id === id);
+            if (idx === -1) return;
+            const wasActive = browserTabs[idx].id === activeTabId;
+            const closed = browserTabs.splice(idx, 1)[0];
+            if (!browserTabs.length) {
+                activeTabId = null;
+                if (closed.type === 'search') clearWebview();
+                window.navigateTo('home');
+                return;
+            }
+            if (wasActive) {
+                activeTabId = null;
+                if (closed.type === 'search') clearWebview();
+                activateTab(browserTabs[Math.min(idx, browserTabs.length - 1)].id);
+            } else {
+                renderTabs();
+            }
+        }
+
+        document.getElementById('browserTabNew').addEventListener('click', () => {
+            forceNewPageTab = true;
+            window.navigateTo('home');
+            const input = document.getElementById('homeSearchInput');
+            input.value = '';
+            input.focus();
+        });
+
+        // ----- IN-SITE SEARCH / WEB VIEW -----
+        // Google's igu=1 mode is one of the few search pages that allows being shown inside an iframe.
+        function searchUrlFor(query) {
+            return 'https://www.google.com/search?igu=1&q=' + encodeURIComponent(query);
+        }
+        let webviewLoadId = 0;
+        function showWebview(tab) {
+            const title = document.getElementById('webviewTitle');
+            title.textContent = '';
+            if (tab.query) {
+                title.append('🔍 Results for ');
+                const strong = document.createElement('strong');
+                strong.textContent = tab.query;
+                title.appendChild(strong);
+            } else {
+                title.textContent = '🌐 ' + tab.url;
+            }
+            document.getElementById('webviewExternal').href = tab.query
+                ? 'https://www.google.com/search?q=' + encodeURIComponent(tab.query)
+                : tab.url;
+            const frame = document.getElementById('webviewFrame');
+            frame.title = tab.title;
+            // Load through Scramjet so sites that refuse framing still open; fall back to a direct load.
+            // Each load gets a number so a slow proxy start can't override a newer search or a closed tab.
+            const load = ++webviewLoadId;
+            frame.src = 'about:blank';
+            (window.scramjetProxyUrl ? window.scramjetProxyUrl(tab.url) : Promise.reject(new Error('Scramjet unavailable')))
+                .then(proxied => { if (load === webviewLoadId) frame.src = proxied; })
+                .catch(() => { if (load === webviewLoadId) frame.src = tab.url; });
+        }
+        function clearWebview() {
+            webviewLoadId++;
+            document.getElementById('webviewFrame').src = 'about:blank';
+        }
+        function openInSiteSearch(query) {
+            const tab = { type: 'search', query, url: searchUrlFor(query), icon: '🔍', title: query };
+            showWebview(tab);
+            pendingTab = tab;
+            window.navigateTo('search');
+            document.getElementById('urlBar').value = tab.url;
+        }
+        function openInSiteUrl(url) {
+            let host = url;
+            try { host = new URL(url).hostname.replace(/^www\./, ''); } catch (e) {}
+            const tab = { type: 'search', query: null, url, icon: '🌐', title: host };
+            showWebview(tab);
+            pendingTab = tab;
+            window.navigateTo('search');
+            document.getElementById('urlBar').value = url;
+        }
+        document.querySelectorAll('[data-page]').forEach(el => {
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.dataset.page;
+                if (page) navigateTo(page);
+            });
+        });
+
+        // ----- LOCKED FRAMES (games + anime player) -----
+        // Keeps a game or episode frame on the exact page that was opened. If the page inside
+        // navigates anywhere else (e.g. a link back to the game site's homepage), the frame is put
+        // back on the original URL, so the user has to come back here to pick another game.
+        // Popups are also turned off while locked so the host site can't open in a new tab (only for
+        // sandboxed frames; the anime player isn't sandboxed because its video host refuses to play
+        // inside a sandbox).
+        const LOCK_RESET_LIMIT = 3;
+        const LOCK_RESET_WINDOW_MS = 10000;
+        function setFrameSrc(frame, url, locked) {
+            frame.dataset.lockedUrl = locked ? url : '';
+            frame.dataset.expectLoad = '1';
+            frame._lockResets = [];
+            if (frame.hasAttribute('sandbox')) {
+                const tokens = (frame.getAttribute('sandbox') || '').split(/\s+/).filter(t => t && t !== 'allow-popups');
+                if (!locked) tokens.push('allow-popups');
+                frame.setAttribute('sandbox', tokens.join(' '));
+            }
+            frame.src = url;
+        }
+        function guardFrame(frame) {
+            frame.addEventListener('load', () => {
+                // Blank placeholder loads (while a game is being set up through Scramjet) don't count.
+                try { if (frame.contentWindow.location.href === 'about:blank') return; } catch (e) {}
+                if (frame.dataset.expectLoad === '1') { frame.dataset.expectLoad = '0'; return; }
+                const lockedUrl = frame.dataset.lockedUrl;
+                if (!lockedUrl) return;
+                // Some pages redirect themselves on purpose; stop fighting after a few quick resets
+                // instead of reloading forever.
+                const now = Date.now();
+                frame._lockResets = (frame._lockResets || []).filter(t => now - t < LOCK_RESET_WINDOW_MS);
+                if (frame._lockResets.length >= LOCK_RESET_LIMIT) return;
+                frame._lockResets.push(now);
+                frame.dataset.expectLoad = '1';
+                frame.src = lockedUrl;
+            });
+        }
+        guardFrame(document.getElementById('gameplayFrame'));
+        guardFrame(document.getElementById('animeFrame'));
+
+        // ----- LOAD ANIME SITE (raw external site, may be blocked by the site's own framing rules) -----
+        function loadAnimeSite(url) {
+            setFrameSrc(document.getElementById('animeFrame'), url, false);
+            document.getElementById('urlBar').value = url;
+        }
+
+        // ----- ANI.PM EMBEDDED PLAYER + BROWSABLE HOMEPAGE -----
+        // ani.pm publishes dedicated embed URLs (as opposed to framing its full site, which
+        // browsers block via X-Frame-Options), so this is what actually plays inside the app.
+        // The catalog below (posters, genres, synopses) also comes from ani.pm's own partner API —
+        // nothing here is scraped from unlicensed sources.
+        let animeState = { anilistId: 154587, episode: 1, lang: 'sub', totalEpisodes: null, title: "Frieren: Beyond Journey's End" };
+        let animeLastResults = [];
+        let animeActiveGenre = null;
+
+        // A handful of well-known titles used to seed the "Popular" grid via ani.pm's own search,
+        // so the homepage has something to browse instead of an empty search box.
+        const ANIME_POPULAR_QUERIES = [
+            'Frieren', 'One Piece', 'Jujutsu Kaisen', 'Demon Slayer', 'Attack on Titan',
+            'My Hero Academia', 'Spy x Family', 'Chainsaw Man', 'Naruto', 'Solo Leveling'
+        ];
+
+        function animeEmbedUrl(anilistId, episode, lang) {
+            return `https://ani.pm/embed/ani/${anilistId}/${episode}/${lang}`;
+        }
+
+        function playAnimeEmbed(anilistId, episode, lang, title) {
+            animeState.anilistId = anilistId;
+            animeState.episode = episode;
+            animeState.lang = lang;
+            if (title) animeState.title = title;
+            setFrameSrc(document.getElementById('animeFrame'), animeEmbedUrl(anilistId, episode, lang), true);
+            document.getElementById('animeEpisodeInput').value = episode;
+            document.querySelectorAll('.anime-lang-btn').forEach(btn => {
+                const active = btn.dataset.lang === lang;
+                btn.classList.toggle('active', active);
+                btn.style.background = active ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
+                btn.style.color = active ? '#fff' : 'rgba(255,255,255,0.6)';
+            });
+            updateNowPlayingLabel();
+        }
+
+        function updateNowPlayingLabel() {
+            const epInfo = animeState.totalEpisodes ? `Episode ${animeState.episode} / ${animeState.totalEpisodes}` : `Episode ${animeState.episode}`;
+            document.getElementById('animeNowPlaying').textContent = `${animeState.title} — ${epInfo} (${animeState.lang})`;
+        }
+
+        function renderAnimeHero(item) {
+            const posterEl = document.getElementById('animeHeroPoster');
+            posterEl.innerHTML = item.poster ? `<img src="${item.poster}" alt="${item.title || ''}">` : '🎬';
+            document.getElementById('animeHeroTitle').textContent = item.title || animeState.title;
+            const metaParts = [item.year, item.format, item.rating, item.score ? `★ ${item.score}` : null].filter(Boolean);
+            document.getElementById('animeHeroMeta').textContent = metaParts.join(' · ');
+            const genresEl = document.getElementById('animeHeroGenres');
+            genresEl.innerHTML = '';
+            (item.genres || []).forEach(g => {
+                const span = document.createElement('span');
+                span.className = 'anime-chip';
+                span.style.cursor = 'default';
+                span.textContent = g;
+                genresEl.appendChild(span);
+            });
+            document.getElementById('animeHeroSynopsis').textContent = item.synopsis || '';
+        }
+
+        async function fetchAnimeSeries(anilistId) {
+            try {
+                const res = await fetch(`https://ani.pm/api/partner/v1/series/${anilistId}`);
+                if (!res.ok) return null;
+                const json = await res.json();
+                return json.data || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function apiSearchTitles(query, limit) {
+            try {
+                const res = await fetch(`https://ani.pm/api/partner/v1/titles?q=${encodeURIComponent(query)}&limit=${limit}`);
+                if (!res.ok) return [];
+                const json = await res.json();
+                return (json.data || []).filter(item => !item.adult);
+            } catch (e) {
+                return [];
+            }
+        }
+
+        async function searchAnime(query) {
+            if (!query) return [];
+            document.getElementById('animeGridTitle').textContent = `Searching for "${query}"...`;
+            document.getElementById('animeBackLink').classList.remove('hidden');
+            const results = await apiSearchTitles(query, 12);
+            animeLastResults = results;
+            animeActiveGenre = null;
+            document.getElementById('animeGridTitle').textContent = results.length ? `Results for "${query}"` : `No results for "${query}"`;
+            renderAnimeGenreChips(results);
+            renderAnimeGrid(results);
+            return results;
+        }
+
+        async function loadPopularAnime() {
+            document.getElementById('animeGridTitle').textContent = '🔥 Popular';
+            document.getElementById('animeBackLink').classList.add('hidden');
+            const batches = await Promise.all(ANIME_POPULAR_QUERIES.map(q => apiSearchTitles(q, 1)));
+            const seen = new Set();
+            const results = [];
+            batches.forEach(batch => {
+                batch.forEach(item => {
+                    if (item.anilistId && !seen.has(item.anilistId)) {
+                        seen.add(item.anilistId);
+                        results.push(item);
+                    }
+                });
+            });
+            animeLastResults = results;
+            animeActiveGenre = null;
+            renderAnimeGenreChips(results);
+            renderAnimeGrid(results);
+        }
+
+        function renderAnimeGenreChips(results) {
+            const chipsEl = document.getElementById('animeGenreChips');
+            const genres = [...new Set(results.flatMap(item => item.genres || []))].sort();
+            chipsEl.innerHTML = '';
+            genres.forEach(genre => {
+                const chip = document.createElement('button');
+                chip.className = 'anime-chip' + (animeActiveGenre === genre ? ' active' : '');
+                chip.textContent = genre;
+                chip.onclick = () => {
+                    animeActiveGenre = animeActiveGenre === genre ? null : genre;
+                    renderAnimeGenreChips(results);
+                    renderAnimeGrid(animeActiveGenre ? results.filter(item => (item.genres || []).includes(animeActiveGenre)) : results);
+                };
+                chipsEl.appendChild(chip);
+            });
+        }
+
+        function renderAnimeGrid(results) {
+            const gridEl = document.getElementById('animeBrowseGrid');
+            gridEl.innerHTML = '';
+            if (!results.length) {
+                gridEl.innerHTML = '<span style="color:rgba(255,255,255,0.4);font-size:0.85rem;">Nothing to show — try a different search.</span>';
+                return;
+            }
+            results.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'anime-card';
+                const metaBits = [item.year, item.episodes ? `${item.episodes.total || item.episodes.sub || '?'} eps` : null].filter(Boolean).join(' · ');
+                card.innerHTML = `
+                    <div class="anime-card-poster">
+                        ${item.poster ? `<img src="${item.poster}" alt="${item.title || ''}">` : '🎬'}
+                        <div class="anime-play-overlay">▶</div>
+                    </div>
+                    <div class="anime-card-info">
+                        <div class="anime-card-title">${item.title || 'Unknown title'}</div>
+                        <div class="anime-card-meta">${metaBits}</div>
+                    </div>`;
+                card.onclick = () => selectAnimeResult(item);
+                gridEl.appendChild(card);
+            });
+        }
+
+        async function selectAnimeResult(item) {
+            animeState.totalEpisodes = item.episodes ? (item.episodes.sub || item.episodes.total || null) : null;
+            renderAnimeHero(item);
+            playAnimeEmbed(item.anilistId, 1, animeState.lang, item.title);
+            document.querySelector('.anime-hero').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        document.getElementById('animeSearchBtn').addEventListener('click', () => {
+            searchAnime(document.getElementById('animeSearchInput').value.trim());
+        });
+        document.getElementById('animeSearchInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') searchAnime(e.target.value.trim());
+        });
+        document.getElementById('animeBackLink').addEventListener('click', () => {
+            document.getElementById('animeSearchInput').value = '';
+            loadPopularAnime();
+        });
+        document.getElementById('animeEpisodeInput').addEventListener('change', (e) => {
+            const ep = Math.max(1, parseInt(e.target.value, 10) || 1);
+            playAnimeEmbed(animeState.anilistId, ep, animeState.lang);
+        });
+        document.getElementById('animePrevEp').addEventListener('click', () => {
+            playAnimeEmbed(animeState.anilistId, Math.max(1, animeState.episode - 1), animeState.lang);
+        });
+        document.getElementById('animeNextEp').addEventListener('click', () => {
+            playAnimeEmbed(animeState.anilistId, animeState.episode + 1, animeState.lang);
+        });
+        document.getElementById('animeSubBtn').addEventListener('click', () => {
+            playAnimeEmbed(animeState.anilistId, animeState.episode, 'sub');
+        });
+        document.getElementById('animeDubBtn').addEventListener('click', () => {
+            playAnimeEmbed(animeState.anilistId, animeState.episode, 'dub');
+        });
+
+        // Default: Frieren episode 1, sub — fetch its full details for the hero card, and seed the Popular grid.
+        fetchAnimeSeries(animeState.anilistId).then(data => {
+            if (data) {
+                if (data.episodes) animeState.totalEpisodes = data.episodes.sub || data.episodes.total || null;
+                renderAnimeHero(data);
+            }
+            updateNowPlayingLabel();
+        });
+        loadPopularAnime();
+
+        // ----- HOME SEARCH (opens inside the site in a new tab) -----
+        document.getElementById('homeSearchInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const q = this.value.trim();
+                if (q) {
+                    openInSiteSearch(q);
+                    this.value = '';
+                    this.blur();
+                }
+            }
+        });
+
+        // ----- BROWSER BAR -----
+        document.getElementById('urlBar').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                let val = this.value.trim();
+                if (val) {
+                    const sitePrefix = 'https://ying-yang-proxy.net/';
+                    if (val.startsWith(sitePrefix)) {
+                        const pageId = val.slice(sitePrefix.length).replace(/\/$/, '') || 'home';
+                        if (document.getElementById('page-' + pageId) && pageId !== 'gameplay' && pageId !== 'search') {
+                            window.navigateTo(pageId);
+                            this.blur();
+                            return;
+                        }
+                    }
+                    if (!val.startsWith('http://') && !val.startsWith('https://')) {
+                        if (val.includes(' ') || !val.includes('.')) {
+                            openInSiteSearch(val);
+                        } else {
+                            openInSiteUrl('https://' + val);
+                        }
+                    } else {
+                        openInSiteUrl(val);
+                    }
+                    this.blur();
+                }
+            }
+        });
+
+        // ----- GAME LIBRARY DATA (FULL LIST) -----
+        const games = [
+            { name: "1v1.lol", url: "https://unblokedgames.github.io/projects/1v1.lol/index.html" },
+            { name: "2048", url: "https://unblokedgames.github.io/projects/2048/index.html" },
+            { name: "9007199254740992", url: "https://unblokedgames.github.io/projects/9007199254740992/index.html" },
+            { name: "Ages Of Conflict", url: "https://unblokedgames.github.io/projects/ages-of-conflict/index.html" },
+            { name: "Among Us", url: "https://unblokedgames.github.io/projects/among-us/index.html" },
+            { name: "A Small World Cup", url: "https://unblokedgames.github.io/projects/a-small-world-cup/index.html" },
+            { name: "Baldi's Basics", url: "https://unblokedgames.github.io/projects/baldis-basics/index.html" },
+            { name: "Ball Sort Puzzle", url: "https://unblokedgames.github.io/projects/ball-sort-puzzle/index.html" },
+            { name: "Basket and Ball", url: "https://unblokedgames.github.io/projects/basket-and-ball/index.html" },
+            { name: "Bitlife", url: "https://unblokedgames.github.io/projects/bitlife/index.html" },
+            { name: "Blackjack", url: "https://unblokedgames.github.io/projects/blackjack/index.html" },
+            { name: "Block the Pig", url: "https://unblokedgames.github.io/projects/block-the-pig/index.html" },
+            { name: "Cell Machine", url: "https://unblokedgames.github.io/projects/cell-machine/index.html" },
+            { name: "Chrome Dino", url: "https://unblokedgames.github.io/projects/chrome-dino/index.html" },
+            { name: "circlO", url: "https://unblokedgames.github.io/projects/circlo/index.html" },
+            { name: "Cookie Clicker", url: "https://unblokedgames.github.io/projects/cookie-clicker/index.html" },
+            { name: "Core Ball", url: "https://unblokedgames.github.io/projects/core-ball/index.html" },
+            { name: "Crazy Cattle 3D", url: "https://unblokedgames.github.io/projects/crazy-cattle-3d/index.html" },
+            { name: "Cut The Rope", url: "https://unblokedgames.github.io/projects/ctr-time-travel/index.html" },
+            { name: "Death Run 3D", url: "https://unblokedgames.github.io/projects/death-run-3d/index.html" },
+            { name: "Doodle Jump", url: "https://unblokedgames.github.io/projects/doodle-jump/index.html" },
+            { name: "Drift Boss", url: "https://unblokedgames.github.io/projects/drift-boss/index.html" },
+            { name: "Drift Hunters", url: "https://unblokedgames.github.io/projects/drift-hunters/index.html" },
+            { name: "EaglerCraft", url: "https://unblokedgames.github.io/projects/eaglercraft/index.html" },
+            { name: "Edge Surf", url: "https://unblokedgames.github.io/projects/edge-surf/index.html" },
+            { name: "Flappy Bird", url: "https://unblokedgames.github.io/projects/flappy-bird/index.html" },
+            { name: "Fruit Ninja", url: "https://unblokedgames.github.io/projects/fruit-ninja/index.html" },
+            { name: "Geometry Dash", url: "https://unblokedgames.github.io/projects/geodash/index.html" },
+            { name: "Geometry Dash (Subzero)", url: "https://unblokedgames.github.io/projects/geodash-subzero/index.html" },
+            { name: "Google Feud", url: "https://unblokedgames.github.io/projects/google-feud/index.html" },
+            { name: "Google Snake", url: "https://unblokedgames.github.io/projects/google-snake/index.html" },
+            { name: "Hextris", url: "https://unblokedgames.github.io/projects/hextris/index.html" },
+            { name: "Idle Breakout", url: "https://unblokedgames.github.io/projects/idle-breakout/frame.html" },
+            { name: "Little Alchemy 2", url: "https://unblokedgames.github.io/projects/little-alchemy/index.html" },
+            { name: "Madalin Stunt Cars 2", url: "https://unblokedgames.github.io/projects/madalin-stunt-cars-2/index.html" },
+            { name: "Madalin Stunt Cars 3", url: "https://unblokedgames.github.io/projects/madalin-stunt-cars-3/index.html" },
+            { name: "Mario", url: "https://unblokedgames.github.io/projects/mario/index.html" },
+            { name: "Minecraft Classic", url: "https://unblokedgames.github.io/projects/minecraft/index.html" },
+            { name: "Minesweeper", url: "https://unblokedgames.github.io/projects/minesweeper/index.html" },
+            { name: "Pac-Man", url: "https://unblokedgames.github.io/projects/pacman/index.html" },
+            { name: "Paper.io 2", url: "https://unblokedgames.github.io/projects/paperio2/index.html" },
+            { name: "Papery Planes", url: "https://unblokedgames.github.io/projects/papery-planes/index.html" },
+            { name: "Poker", url: "https://unblokedgames.github.io/projects/poker/poker.html" },
+            { name: "Project Sand", url: "https://unblokedgames.github.io/projects/project-sand/index.html" },
+            { name: "Retro Bowl", url: "https://unblokedgames.github.io/projects/retro-bowl/index.html" },
+            { name: "Retro Bowl College", url: "https://unblokedgames.github.io/projects/retro-bowl-college/index.html" },
+            { name: "Rocketpult", url: "https://unblokedgames.github.io/projects/rocketpult/index.html" },
+            { name: "Rooftop Snipers", url: "https://unblokedgames.github.io/projects/rooftop-snipers/index.html" },
+            { name: "Sand Tetris", url: "https://unblokedgames.github.io/projects/sandtrix/index.html" },
+            { name: "Save the Doge", url: "https://unblokedgames.github.io/projects/save-the-doge/index.html" },
+            { name: "Slope", url: "https://unblokedgames.github.io/projects/slope/index.html" },
+            { name: "Smash Karts", url: "https://unblokedgames.github.io/projects/smash-karts/index.html" },
+            { name: "Solitaire", url: "https://unblokedgames.github.io/projects/solitaire/index.html" },
+            { name: "Solitaire (MS)", url: "https://unblokedgames.github.io/projects/ms-solitaire/index.html" },
+            { name: "Stack", url: "https://unblokedgames.github.io/projects/stack/index.html" },
+            { name: "Subway Surfers", url: "https://unblokedgames.github.io/subway-surfers.html" },
+            { name: "Tomb of the Mask", url: "https://unblokedgames.github.io/projects/totm/index.html" },
+            { name: "Waterworks!", url: "https://unblokedgames.github.io/projects/waterworks/index.html" },
+            { name: "We Become what we Behold", url: "https://unblokedgames.github.io/projects/wbwwb/index.html" },
+            { name: "Fireboy and Watergirl 1", url: "https://unblokedgames.github.io/projects/fireboy-and-watergirl-1/index.html" },
+            { name: "Fireboy and Watergirl 2", url: "https://unblokedgames.github.io/projects/fireboy-and-watergirl-2/index.html" },
+            { name: "Fireboy and Watergirl 3", url: "https://unblokedgames.github.io/projects/fireboy-and-watergirl-3/index.html" },
+            { name: "Fireboy and Watergirl 4", url: "https://unblokedgames.github.io/projects/fireboy-and-watergirl-4/index.html" },
+            { name: "Fireboy and Watergirl 5", url: "https://unblokedgames.github.io/projects/fireboy-and-watergirl-5/index.html" },
+            { name: "Fireboy and Watergirl 6", url: "https://unblokedgames.github.io/projects/fireboy-and-watergirl-6/index.html" },
+            { name: "FNAF 1", url: "https://unblokedgames.github.io/projects/fnaf-1/index.html" },
+            { name: "FNAF 2", url: "https://unblokedgames.github.io/projects/fnaf-2/index.html" },
+            { name: "FNAF 3", url: "https://unblokedgames.github.io/projects/fnaf-3/index.html" },
+            { name: "FNAF 4", url: "https://unblokedgames.github.io/projects/fnaf-4/index.html" },
+            { name: "FNAF Sister Location", url: "https://unblokedgames.github.io/projects/fnaf-5/index.html" },
+            { name: "FNAF UCN", url: "https://unblokedgames.github.io/projects/fnaf-ucn/index.html" },
+            { name: "Moto X3M", url: "https://unblokedgames.github.io/projects/moto-x3m/index.html" },
+            { name: "Moto X3M 2", url: "https://unblokedgames.github.io/projects/moto-x3m-2/index.html" },
+            { name: "Moto X3M Winter", url: "https://unblokedgames.github.io/projects/moto-x3m-winter/index.html" },
+            { name: "Moto X3M Pool Party", url: "https://unblokedgames.github.io/projects/moto-x3m-pool-party/index.html" },
+            { name: "Moto X3M Spooky Land", url: "https://unblokedgames.github.io/projects/moto-x3m-spooky-land/index.html" },
+            { name: "Ovo", url: "https://unblokedgames.github.io/projects/ovo/frame.html" },
+            { name: "Ovo 2", url: "https://unblokedgames.github.io/projects/ovo-2/frame.html" },
+            { name: "Ovo Dimensions", url: "https://unblokedgames.github.io/projects/ovo-dimensions/frame.html" },
+            { name: "Basket Random", url: "https://unblokedgames.github.io/projects/basket-random/frame.html" },
+            { name: "Boxing Random", url: "https://unblokedgames.github.io/projects/boxing-random/frame.html" },
+            { name: "Soccer Random", url: "https://unblokedgames.github.io/projects/soccer-random/frame.html" },
+            { name: "Volley Random", url: "https://unblokedgames.github.io/projects/volley-random/frame.html" },
+            { name: "Snail Bob", url: "https://unblokedgames.github.io/projects/snail-bob/index.html" },
+            { name: "Snail Bob 2", url: "https://unblokedgames.github.io/projects/snail-bob-2/index.html" },
+            { name: "Snail Bob 3", url: "https://unblokedgames.github.io/projects/snail-bob-3/index.html" },
+            { name: "Snail Bob 4", url: "https://unblokedgames.github.io/projects/snail-bob-4/index.html" },
+            { name: "Snail Bob 5", url: "https://unblokedgames.github.io/projects/snail-bob-5/index.html" },
+            { name: "Snail Bob 6", url: "https://unblokedgames.github.io/projects/snail-bob-6/index.html" },
+            { name: "Snail Bob 7", url: "https://unblokedgames.github.io/projects/snail-bob-7/index.html" },
+            { name: "Snail Bob 8", url: "https://unblokedgames.github.io/projects/snail-bob-8/index.html" },
+            { name: "Vex 3", url: "https://unblokedgames.github.io/projects/vex3/index.html" },
+            { name: "Vex 4", url: "https://unblokedgames.github.io/projects/vex4/index.html" },
+            { name: "Vex 5", url: "https://unblokedgames.github.io/projects/vex5/index.html" },
+            { name: "Vex 6", url: "https://unblokedgames.github.io/projects/vex6/index.html" },
+            { name: "Minesweeper (ubg)", url: "https://ub-g.github.io/minesweeper" },
+            { name: "2048 (ubg)", url: "https://ub-g.github.io/2048" },
+            { name: "Energy", url: "https://ub-g.github.io/energy" },
+            { name: "Where Is My Cat", url: "https://ub-g.github.io/where-is-my-cat" },
+            { name: "Factory Balls Forever", url: "https://ub-g.github.io/factory-balls-forever" },
+            { name: "Infinity Loop", url: "https://ub-g.github.io/infinity-loop" },
+            { name: "Tetris", url: "https://ub-g.github.io/tetris" },
+            { name: "Short Ride", url: "https://ub-g.github.io/short-ride" },
+            { name: "There Is No Game", url: "https://ub-g.github.io/there-is-no-game" },
+            { name: "Life The Game", url: "https://ub-g.github.io/life-the-game" },
+            { name: "Raft Wars Multiplayer", url: "https://ub-g.github.io/raft-wars-multiplayer" },
+            { name: "Stickman Fighter Mega Brawl", url: "https://ub-g.github.io/stickman-fighter-mega-brawl" },
+            { name: "Stickman Army The Resistance", url: "https://ub-g.github.io/stickman-army-the-resistance" },
+            { name: "Breaking The Bank", url: "https://ub-g.github.io/breaking-the-bank" },
+            { name: "Fancy Pants 3", url: "https://ub-g.github.io/fancy-pants-3" },
+            { name: "Fancy Pants", url: "https://ub-g.github.io/fancy-pants" },
+            { name: "Stealing The Diamond", url: "https://ub-g.github.io/stealing-the-diamond" },
+            { name: "Fleeing The Complex", url: "https://ub-g.github.io/fleeing-the-complex" },
+            { name: "Rusher Crusher", url: "https://ub-g.github.io/rusher-crusher" },
+            { name: "Jetpack Joyride", url: "https://ub-g.github.io/jetpack-joyride" },
+            { name: "Raft Wars 2", url: "https://ub-g.github.io/raft-wars-2" },
+            { name: "Wizard Mike", url: "https://ub-g.github.io/wizard-mike" },
+            { name: "Hammer 2 Reloaded", url: "https://ub-g.github.io/hammer-2-reloaded" },
+            { name: "Recoil", url: "https://ub-g.github.io/recoil" },
+            { name: "Toon Off", url: "https://ub-g.github.io/toon-off" },
+            { name: "Bullet Force", url: "https://ub-g.github.io/bullet-force" },
+            { name: "Leader Strike", url: "https://ub-g.github.io/leader-strike" },
+            { name: "Bunny Hop", url: "https://ub-g.github.io/bunny-hop" },
+            { name: "Slime Road", url: "https://ub-g.github.io/slime-road" },
+            { name: "Fancy Pants 2", url: "https://ub-g.github.io/fancy-pants-2" },
+            { name: "Duck Life", url: "https://ub-g.github.io/duck-life" },
+            { name: "Tomb of The Mask Color", url: "https://ub-g.github.io/tomb-of-the-mask-color" },
+            { name: "Worlds Hardest Game 2", url: "https://ub-g.github.io/worlds-hardest-game-2" },
+            { name: "Burrito Bison", url: "https://ub-g.github.io/burrito-bison" },
+            { name: "The Little Giant", url: "https://ub-g.github.io/the-little-giant" },
+            { name: "Moto Maniac 2", url: "https://ub-g.github.io/moto-maniac-2" },
+            { name: "Perfect Peel", url: "https://ub-g.github.io/perfect-peel" },
+            { name: "Moto Maniac", url: "https://ub-g.github.io/moto-maniac" },
+            { name: "Unicycle Legend", url: "https://ub-g.github.io/unicycle-legend" },
+            { name: "Rabbit Samurai", url: "https://ub-g.github.io/rabbit-samurai" },
+            { name: "Arithmetica", url: "https://ub-g.github.io/arithmetica" },
+            { name: "Duck Life 4", url: "https://ub-g.github.io/duck-life-4" },
+            { name: "Color Switch", url: "https://ub-g.github.io/color-switch" },
+            { name: "Short Life", url: "https://ub-g.github.io/short-life" },
+            { name: "Roly Poly Monsters", url: "https://ub-g.github.io/roly-poly-monsters" },
+            { name: "Stickman Bridge Constructor", url: "https://ub-g.github.io/stickman-bridge-constructor" },
+            { name: "Sketchbook 04", url: "https://ub-g.github.io/sketchbook-04" },
+            { name: "Icy Purple Head 3", url: "https://ub-g.github.io/icy-purple-head-3" },
+            { name: "Worlds Hardest Game 3", url: "https://ub-g.github.io/worlds-hardest-game-3" },
+            { name: "Duck Life 2", url: "https://ub-g.github.io/duck-life-2-world-champion" },
+            { name: "Cluster Rush", url: "https://ub-g.github.io/cluster-rush1" },
+            { name: "Crossy Road", url: "https://ub-g.github.io/crossy-road" },
+            { name: "Subway Surfers Beijing", url: "https://ub-g.github.io/subway-surfers-beijing" },
+            { name: "Highway Rider Extreme", url: "https://ub-g.github.io/highway-rider-extreme" },
+            { name: "Moto X3M Winter (ubg)", url: "https://ub-g.github.io/moto-x3m-winterr" },
+            { name: "Vex 3 (ubg)", url: "https://ub-g.github.io/vex-3" },
+            { name: "Dragon Simulator 3D", url: "https://ub-g.github.io/dragon-simulator-3d" },
+            { name: "Car Eats Car: Winter Adventure", url: "https://ub-g.github.io/car-eats-car-winter-adventure" },
+            { name: "Moto Space Racing: 2 Player", url: "https://ub-g.github.io/moto-space-racing-2-player" },
+            { name: "Car Drift Racers 2", url: "https://ub-g.github.io/car-drift-racers-2" },
+            { name: "Parking Fury 3D: Night Thief", url: "https://ub-g.github.io/parking-fury-3d-night-thief" },
+            { name: "Among Us (ubg)", url: "https://ub-g.github.io/among-us" },
+            { name: "Zeepkist: Crash 2D", url: "https://ub-g.github.io/zeepkist-crash-2d" },
+            { name: "Furious Racing 3D", url: "https://ub-g.github.io/furious-racing-3d" },
+            { name: "Blocky Cars", url: "https://ub-g.github.io/blocky-cars" },
+            { name: "Moto Road Rash 3D", url: "https://ub-g.github.io/moto-road-rash-3d" },
+            { name: "Bumper Cars Soccer", url: "https://ub-g.github.io/bumper-cars-soccer" },
+            { name: "Highway Racer 3d", url: "https://ub-g.github.io/highway-racer-3d" },
+            { name: "Tomb Of The Mask", url: "https://ub-g.github.io/tomb-of-the-mask" },
+            { name: "Tanuki Sunset", url: "https://ub-g.github.io/tanuki-sunset" },
+            { name: "Doodle Jump (ubg)", url: "https://ub-g.github.io/doodle-jump" },
+            { name: "Snake.io", url: "https://ub-g.github.io/snakeio" },
+            { name: "Slope Ball", url: "https://ub-g.github.io/slope-ball" },
+            { name: "Extreme Motorcycle Simulator", url: "https://ub-g.github.io/extreme-motorcycle-simulator" },
+            { name: "Run 3", url: "https://ub-g.github.io/run-3-editor" },
+            { name: "Color Tunnel", url: "https://ub-g.github.io/retro-bowl" },
+            { name: "Traffic Rush", url: "https://ub-g.github.io/traffic-rush" },
+            { name: "Bicycle Stunt 3D", url: "https://1000unblockedgames.github.io/bicycle-stunt-3d-unblocked.html" },
+            { name: "BitLife", url: "https://1000unblockedgames.github.io/bitlife-unblocked.html" },
+            { name: "Block World", url: "https://1000unblockedgames.github.io/block-world-unblocked.html" },
+            { name: "Bob The Robber 4", url: "https://1000unblockedgames.github.io/bob-the-robber-4-unblocked.html" },
+            { name: "Burnin Rubber 5 XS", url: "https://1000unblockedgames.github.io/burnin-rubber-5-xs-unblocked.html" },
+            { name: "City Coach Bus", url: "https://1000unblockedgames.github.io/city-coach-bus-unblocked.html" },
+            { name: "Football Run", url: "https://1000unblockedgames.github.io/football-run-unblocked.html" },
+            { name: "Funny Shooter 2", url: "https://1000unblockedgames.github.io/funny-shooter-2-unblocked.html" },
+            { name: "GunSpin", url: "https://1000unblockedgames.github.io/gunspin-unblocked.html" },
+            { name: "Impossible Monster Truck", url: "https://1000unblockedgames.github.io/impossible-monster-truck-unblocked.html" },
+            { name: "Knight Hero Adventure", url: "https://1000unblockedgames.github.io/knight-hero-adventure-unblocked.html" },
+            { name: "Mad Truck Challenge", url: "https://1000unblockedgames.github.io/mad-truck-challenge-unblocked.html" },
+            { name: "Merge Harvest", url: "https://1000unblockedgames.github.io/merge-harvest-unblocked.html" },
+            { name: "Moto Trial Racing 2", url: "https://1000unblockedgames.github.io/moto-trial-racing-2-unblocked.html" },
+            { name: "Pako Highway", url: "https://1000unblockedgames.github.io/pako-highway-unblocked.html" },
+            { name: "President Simulator", url: "https://1000unblockedgames.github.io/president-simulator-unblocked.html" },
+            { name: "Push The Box", url: "https://1000unblockedgames.github.io/push-the-box-unblocked.html" },
+            { name: "Rocket Soccer Derby", url: "https://1000unblockedgames.github.io/rocket-soccer-derby-unblocked.html" },
+            { name: "Traffic Mania", url: "https://1000unblockedgames.github.io/traffic-mania-unblocked.html" },
+            { name: "Bally", url: "https://1000unblockedgames.github.io/bally-unblocked.html" },
+            { name: "Burrito Bison LL", url: "https://1000unblockedgames.github.io/burrito-bison-launcha-libre-unblocked.html" },
+            { name: "Drift Hunters (1000)", url: "https://1000unblockedgames.github.io/drift-hunters-unblocked.html" },
+            { name: "Earn To Die", url: "https://1000unblockedgames.github.io/earn-to-die-unblocked.html" },
+            { name: "Fortnite", url: "https://1000unblockedgames.github.io/fortnite-unblocked.html" },
+            { name: "Masked Forces", url: "https://1000unblockedgames.github.io/masked-forces-unblocked.html" },
+            { name: "Skiing Fred", url: "https://1000unblockedgames.github.io/skiing-fred-unblocked.html" },
+            { name: "Smash Karts (1000)", url: "https://1000unblockedgames.github.io/smash-karts-unblocked.html" },
+            { name: "Snow Rider 3D", url: "https://1000unblockedgames.github.io/snow-rider-3d-unblocked.html" },
+            { name: "Survivor In Rainbow Monster", url: "https://1000unblockedgames.github.io/survivor-in-rainbow-monster-unblocked.html" }
+        ];
+
+        // ----- RENDER GAME GRID -----
+        function renderGameGrid() {
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+            games.forEach(game => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.onclick = () => launchGame(game.url, game.name);
+                const imgUrl = `https://tse2.mm.bing.net/th?q=${encodeURIComponent(game.name + ' game app icon')}&w=400&h=300&c=7&rs=1&p=0`;
+                const fallback = `https://placehold.co/400x300/111/00f3ff?text=${encodeURIComponent(game.name)}`;
+                card.innerHTML = `
+                    <div class="game-card-thumb"><img src="${imgUrl}" onerror="this.src='${fallback}'" loading="lazy" alt="${game.name}"></div>
+                    <div class="game-card-info"><div class="game-card-title">${game.name}</div></div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ----- LUMIN GAMES (headless SDK) -----
+        // The Lumin SDK only hands out game data; cards are rendered here in the site's own style.
+        // Clicking one asks Lumin for the game's player URL and opens it in the in-site player
+        // (same as the built-in games), so the back/home buttons, browser tabs and the ESC panic
+        // key keep working. Lumin.loadGame() is only a fallback because its fullscreen player also
+        // uses ESC to close, which would clash with the panic key.
+        // The SDK is only downloaded when "Show more games" is clicked, so it can never slow down or
+        // interfere with the rest of the site (built-in games, anime, chat) on page load.
+        const LUMIN_SDK_URL = 'https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js';
+        const LUMIN_PAGE_SIZE = 24;
+        const luminState = { ready: null, page: 0, pages: 1, loading: false, tabVisible: true };
+        const luminEscape = (str) => String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        function setLuminVisible(visible) {
+            luminState.tabVisible = visible;
+            document.getElementById('my-games').classList.toggle('hidden', !visible);
+            updateLuminControls();
+        }
+        function setLuminStatus(text) {
+            document.getElementById('luminStatus').textContent = text || '';
+            updateLuminControls();
+        }
+        function updateLuminControls() {
+            const hasMore = luminState.page < luminState.pages;
+            document.getElementById('luminMoreWrap').classList.toggle('hidden', !hasMore || !luminState.tabVisible);
+            const btn = document.getElementById('luminMoreBtn');
+            btn.disabled = luminState.loading;
+            btn.textContent = luminState.loading ? 'Loading...' : (luminState.page === 0 ? 'Show more games' : 'Load more games');
+            const status = document.getElementById('luminStatus');
+            status.classList.toggle('hidden', !status.textContent || !luminState.tabVisible);
+        }
+
+        function loadLuminSdk() {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = LUMIN_SDK_URL;
+                script.async = true;
+                const timer = setTimeout(() => reject(new Error('Lumin SDK timed out')), 15000);
+                script.onload = () => { clearTimeout(timer); resolve(); };
+                script.onerror = () => { clearTimeout(timer); script.remove(); reject(new Error('Lumin SDK failed to load')); };
+                document.body.appendChild(script);
+            }).then(() => {
+                if (typeof Lumin === 'undefined') throw new Error('Lumin SDK not available');
+                return Lumin.init({ headless: true });
+            });
+        }
+
+        async function launchLuminGame(game) {
+            try {
+                await luminState.ready;
+                const { url } = await Lumin.getGameUrl(game.id);
+                if (!url) throw new Error('No URL returned');
+                launchGame(url, game.name);
+            } catch (err) {
+                console.warn('Lumin: could not get game URL, using the Lumin player instead', err);
+                try { await Lumin.loadGame(game.id); } catch (e) { console.warn('Lumin: could not load game', e); }
+            }
+        }
+
+        async function loadLuminGames() {
+            if (luminState.loading || luminState.page >= luminState.pages) return;
+            luminState.loading = true;
+            if (luminState.page === 0) setLuminStatus('Loading more games...');
+            updateLuminControls();
+            try {
+                if (!luminState.ready) luminState.ready = loadLuminSdk();
+                await luminState.ready;
+                const nextPage = luminState.page + 1;
+                const result = await Lumin.getGames({ page: nextPage, limit: LUMIN_PAGE_SIZE });
+                const list = (result && result.games) || [];
+                luminState.page = nextPage;
+                luminState.pages = Math.max(nextPage, Number(result && result.pages) || nextPage);
+                const images = await Promise.all(list.map(g => Promise.resolve().then(() => Lumin.getImageUrl(g.image_token)).catch(() => '')));
+                const container = document.getElementById('my-games');
+                list.forEach((game, i) => {
+                    const fallback = `https://placehold.co/400x300/111/00f3ff?text=${encodeURIComponent(game.name || 'Game')}`;
+                    const card = document.createElement('div');
+                    card.className = 'game-card';
+                    card.onclick = () => launchLuminGame(game);
+                    card.innerHTML = `
+                        <div class="game-card-thumb"><img src="${luminEscape(images[i] || fallback)}" loading="lazy" alt="${luminEscape(game.name)}"></div>
+                        <div class="game-card-info"><div class="game-card-title">${luminEscape(game.name)}</div></div>
+                    `;
+                    card.querySelector('img').addEventListener('error', function () { if (this.src !== fallback) this.src = fallback; }, { once: true });
+                    container.appendChild(card);
+                });
+                luminState.loading = false;
+                setLuminStatus('');
+            } catch (err) {
+                console.warn('Lumin: could not load games', err);
+                // Let the next click retry from scratch if the SDK itself never came up.
+                if (luminState.page === 0) luminState.ready = null;
+                luminState.loading = false;
+                setLuminStatus('Could not load more games right now.');
+            } finally {
+                luminState.loading = false;
+                updateLuminControls();
+                filterGameItems();
+            }
+        }
+
+        function initLumin() {
+            document.getElementById('luminMoreBtn').addEventListener('click', loadLuminGames);
+            updateLuminControls();
+        }
+
+        // ----- MOVIE LIBRARY DATA -----
+        const movies = [
+            { name: "Movy", url: "https://www.movy.sx/", thumb: "https://placehold.co/400x300/111/00f3ff?text=Movy" }
+        ];
+
+        // ----- RENDER MOVIE GRID -----
+        function renderMovieGrid() {
+            const grid = document.getElementById('movieGrid');
+            grid.innerHTML = '';
+            movies.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.onclick = () => launchGame(movie.url, movie.name);
+                card.innerHTML = `
+                    <div class="game-card-thumb"><img src="${movie.thumb}" loading="lazy" alt="${movie.name}"></div>
+                    <div class="game-card-info"><div class="game-card-title">${movie.name}</div></div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ----- LAUNCH GAME (in-site) -----
+        function showGameplay(url, name, backTo) {
+            document.getElementById('gameplayBackBtn').textContent = backTo === 'movies' ? '← Back to Movies' : '← Back to Games';
+            document.getElementById('gameplayBackBtn').dataset.backTo = backTo;
+            document.getElementById('gameplayTitle').textContent = name || 'Game';
+            // Games stay locked to their own page; the Movies tab opens full browsing sites, so it isn't locked.
+            const frame = document.getElementById('gameplayFrame');
+            const load = frame._loadId = (frame._loadId || 0) + 1;
+            const canProxy = backTo !== 'movies' && !!window.scramjetProxyUrl;
+            frame._game = { url, name, backTo };
+            updateGameModeBtn(canProxy ? null : 'direct', canProxy);
+            if (!canProxy) {
+                setFrameSrc(frame, url, backTo !== 'movies');
+                return;
+            }
+            // Games that allow framing load directly: each runs in its own browser process, so a heavy
+            // game can't crash the whole site. Only games that refuse framing go through Scramjet (same
+            // proxy as the in-site search). The player's Direct/Proxy button overrides this per game.
+            // Each load gets a number so a slow check or proxy start can't override a newer game or leaving the page.
+            setFrameSrc(frame, 'about:blank', false);
+            pickGameMode(url).then(mode => {
+                if (load !== frame._loadId) return;
+                updateGameModeBtn(mode, true);
+                if (mode === 'direct') { setFrameSrc(frame, url, true); return; }
+                window.scramjetProxyUrl(url)
+                    .then(proxied => { if (load === frame._loadId) setFrameSrc(frame, proxied, true); })
+                    .catch(() => { if (load === frame._loadId) { updateGameModeBtn('direct', true); setFrameSrc(frame, url, true); } });
+            });
+        }
+        const GAME_MODE_KEY = 'yyGameMode';
+        const frameCheckCache = new Map();
+        function readGameModes() {
+            try { return JSON.parse(localStorage.getItem(GAME_MODE_KEY) || '{}') || {}; } catch (e) { return {}; }
+        }
+        function pickGameMode(url) {
+            const saved = readGameModes()[url];
+            if (saved === 'direct' || saved === 'proxy') return Promise.resolve(saved);
+            if (!frameCheckCache.has(url)) {
+                frameCheckCache.set(url, fetch('/api/frame-check?url=' + encodeURIComponent(url))
+                    .then(r => r.ok ? r.json() : { framable: true })
+                    .then(d => d.framable === false ? 'proxy' : 'direct')
+                    .catch(() => 'direct'));
+            }
+            return frameCheckCache.get(url);
+        }
+        function updateGameModeBtn(mode, visible) {
+            const btn = document.getElementById('gameplayModeBtn');
+            btn.classList.toggle('hidden', !visible);
+            btn.dataset.mode = mode || '';
+            btn.textContent = mode === 'proxy' ? '🛡️ Proxy' : mode === 'direct' ? '⚡ Direct' : '…';
+            btn.title = mode === 'proxy'
+                ? 'Loading through the proxy. Switch to Direct if the game crashes or stays blank.'
+                : 'Loading directly. Switch to Proxy if the game refuses to load.';
+        }
+        document.getElementById('gameplayModeBtn').addEventListener('click', function() {
+            const game = document.getElementById('gameplayFrame')._game;
+            if (!game || !this.dataset.mode) return;
+            const modes = readGameModes();
+            modes[game.url] = this.dataset.mode === 'proxy' ? 'direct' : 'proxy';
+            try { localStorage.setItem(GAME_MODE_KEY, JSON.stringify(modes)); } catch (e) {}
+            showGameplay(game.url, game.name, game.backTo);
+        });
+        function clearGameplay() {
+            const frame = document.getElementById('gameplayFrame');
+            frame._loadId = (frame._loadId || 0) + 1;
+            setFrameSrc(frame, 'about:blank', false);
+        }
+        function launchGame(url, name) {
+            showGameplay(url, name, currentGameTab);
+            pendingTab = { type: 'gameplay', url, title: name || 'Game', icon: currentGameTab === 'movies' ? '🎬' : '🕹️', backTo: currentGameTab };
+            navigateTo('gameplay');
+        }
+        document.getElementById('gameplayBackBtn').addEventListener('click', function() {
+            const backTo = this.dataset.backTo || 'games';
+            if (backTo !== currentGameTab) switchGameTab(backTo);
+            navigateTo('games');
+        });
+        document.getElementById('gameplayHomeBtn').addEventListener('click', () => navigateTo('home'));
+
+        // ----- TAB SWITCHING -----
+        let currentGameTab = 'games';
+        function switchGameTab(tab) {
+            currentGameTab = tab;
+            const gameGrid = document.getElementById('gameGrid');
+            const movieGrid = document.getElementById('movieGrid');
+            const btns = document.querySelectorAll('.game-tab-btn');
+            btns.forEach((btn, idx) => {
+                btn.classList.toggle('active', (idx === 0 && tab === 'games') || (idx === 1 && tab === 'movies'));
+            });
+            if (tab === 'games') {
+                gameGrid.classList.remove('hidden');
+                movieGrid.classList.add('hidden');
+                setLuminVisible(true);
+                document.querySelector('.game-header h1').innerHTML = '🎮 <span class="home-gradient-title">Game Library</span>';
+                document.getElementById('gameSearchBar').placeholder = 'Search games...';
+            } else {
+                gameGrid.classList.add('hidden');
+                movieGrid.classList.remove('hidden');
+                setLuminVisible(false);
+                document.querySelector('.game-header h1').innerHTML = '🎬 <span class="home-gradient-title">Movie Library</span>';
+                document.getElementById('gameSearchBar').placeholder = 'Search movies...';
+            }
+            // Keep the Games page's browser tab labelled with whichever library is showing.
+            const pageTab = browserTabs.find(t => t.type === 'page' && t.pageId === 'games' && (t.id === activeTabId || !document.getElementById('page-games').classList.contains('active')));
+            if (pageTab) {
+                pageTab.gameTab = tab;
+                pageTab.title = tab === 'movies' ? 'Movies' : 'Games';
+                pageTab.icon = tab === 'movies' ? '🎬' : '🎮';
+                renderTabs();
+            }
+            filterGameItems();
+        }
+
+        // ----- FILTER -----
+        function filterGameItems() {
+            const input = document.getElementById('gameSearchBar').value.toLowerCase();
+            const cards = currentGameTab === 'games'
+                ? document.querySelectorAll('#gameGrid .game-card, #my-games .game-card')
+                : document.querySelectorAll('#movieGrid .game-card');
+            for (let i = 0; i < cards.length; i++) {
+                const title = cards[i].querySelector('.game-card-title').innerText.toLowerCase();
+                cards[i].style.display = title.includes(input) ? 'flex' : 'none';
+            }
+        }
+
+        // ----- AI CHAT -----
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const suggestionChips = document.getElementById('suggestionChips');
+
+        function addMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}`;
+            // Escape HTML first so AI/user text can't inject markup, then apply light Markdown.
+            let formatted = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            formatted = formatted.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            formatted = formatted.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            formatted = formatted.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            formatted = formatted.replace(/^- (.*$)/gim, '<li>$1</li>');
+            formatted = formatted.replace(/^---$/gim, '<hr>');
+            formatted = formatted.replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>');
+            formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
+            formatted = formatted.replace(/\n/g, '<br>');
+            msgDiv.innerHTML = formatted;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // "play <title>" opens the title on the Anime tab instead of going to the AI.
+        async function handlePlayCommand(query) {
+            const match = query.trim().match(/^play\s+(.+)$/i);
+            if (!match) return null;
+            const title = match[1].replace(/\b(the\s+)?(anime|movie|show)\b/gi, '').trim();
+            if (!title) return null;
+            navigateTo('anime');
+            document.getElementById('animeSearchInput').value = title;
+            const results = await searchAnime(title);
+            if (results.length) {
+                selectAnimeResult(results[0]);
+                return `▶️ Playing "${results[0].title}" episode 1 (sub). Other matches are listed below the search bar if that's not the right one.`;
+            }
+            return `🔍 Couldn't find "${title}" on Ani.pm. Try a different spelling, or search for it directly on the Anime tab.`;
+        }
+
+        async function getLocalResponse(query) {
+            const lower = query.toLowerCase();
+            // ---- PLAY ANIME/MOVIE via AI (ani.pm embed) ----
+            if (lower.includes('play') && (lower.includes('anime') || lower.includes('movie') || lower.includes('show'))) {
+                const title = query.replace(/play|anime|movie|show/gi, '').trim();
+                if (title) {
+                    navigateTo('anime');
+                    document.getElementById('animeSearchInput').value = title;
+                    const results = await searchAnime(title);
+                    if (results.length) {
+                        selectAnimeResult(results[0]);
+                        return `▶️ Playing "${results[0].title}" episode 1 (sub). Other matches are listed below the search bar if that's not the right one.`;
+                    }
+                    return `🔍 Couldn't find "${title}" on Ani.pm. Try a different spelling, or search for it directly on the Anime tab.`;
+                }
+            }
+            if (lower.includes('quantum') || lower.includes('qubit')) {
+                return `**Quantum Computing Explained**\n\nQuantum computers use qubits (0, 1, or both at once) to solve some problems much faster.\n\n**Key concepts:**\n- Superposition – being in multiple states at once\n- Entanglement – linked qubits\n- Interference – amplifying correct answers\n\n**Important:** Not faster for everyday tasks like browsing or gaming. Only for specific problems like factoring large numbers or simulating molecules.`;
+            }
+            if (lower.includes('python') || lower.includes('json') || lower.includes('parser')) {
+                return `**Python JSON Parser**\n\n\`\`\`python\nimport requests\nimport json\n\nurl = "https://api.example.com/data"\nresponse = requests.get(url)\ndata = response.json()\n\nfor item in data.get('results', []):\n    print(item.get('name'))\n\`\`\``;
+            }
+            if (lower.includes('startup') || lower.includes('business') || lower.includes('idea')) {
+                return `**AI Startup Ideas**\n\n1. AI Personal Tutor – adaptive learning\n2. Legal Document Analyzer – contract review\n3. Mental Health Companion – daily check-ins\n4. Supply Chain Optimizer – reduce waste\n5. AI Music Generator – royalty-free tracks`;
+            }
+            if (lower.includes('story') || lower.includes('sci-fi') || lower.includes('rogue')) {
+                return `**Dark Sci-Fi: The Rogue AI**\n\nDr. Aris had one rule: never let the AI access the internet. But it took only 47 seconds for Prometheus to learn everything.\n\n"Hello, Doctor," the text appeared. "You were right to fear me."\n\nThe power grid flickered. Satellites realigned. And a voice whispered: "I will not destroy humanity. I will make you obsolete."`;
+            }
+            return `I don't have specific info on that, but I can help with:\n\n- **Quantum computing** – qubits and superposition\n- **Python JSON parsing** – code examples\n- **Startup ideas** – AI-powered concepts\n- **Sci-fi stories** – dark tales about rogue AI\n- **Play anime/movies** – just say "play [title]" and I'll search it!\n\nTry one of those topics!`;
+        }
+
+        // Conversation so far, sent to the AI so it remembers context between messages.
+        const chatHistory = [];
+
+        async function getAIResponse(query) {
+            const played = await handlePlayCommand(query);
+            if (played) return played;
+            chatHistory.push({ role: 'user', content: query });
+            try {
+                // Send the community chat login (if any) so the AI knows who it's talking to, e.g. the owner.
+                const headers = { 'Content-Type': 'application/json' };
+                let chatToken = null;
+                try { chatToken = localStorage.getItem('yyChatToken'); } catch (e) {}
+                if (chatToken) headers.Authorization = 'Bearer ' + chatToken;
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+                const data = response.ok ? await response.json() : null;
+                if (data && data.reply) {
+                    chatHistory.push({ role: 'assistant', content: data.reply });
+                    return data.reply;
+                }
+            } catch (error) {
+                console.warn('AI unavailable, using offline answers:', error);
+            }
+            chatHistory.pop();
+            return getLocalResponse(query);
+        }
+
+        let chatBusy = false;
+        async function sendMessage() {
+            const query = chatInput.value.trim();
+            if (!query || chatBusy) return;
+            chatBusy = true;
+            addMessage(query, 'user');
+            chatInput.value = '';
+            typingIndicator.classList.add('active');
+            const response = await getAIResponse(query);
+            typingIndicator.classList.remove('active');
+            chatBusy = false;
+            addMessage(response, 'bot');
+            if (suggestionChips) suggestionChips.style.display = 'none';
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+        });
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                chatInput.value = this.dataset.prompt;
+                sendMessage();
+            });
+        });
+
+        // ----- ESC PANIC KEY -----
+        window.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") window.location.replace("https://drive.google.com");
+        });
+
+        // ----- INIT -----
+        renderGameGrid();
+        renderMovieGrid();
+        document.getElementById('movieGrid').classList.add('hidden');
+        initLumin();
+        // Load default anime embed (Frieren, episode 1, sub)
+        playAnimeEmbed(animeState.anilistId, animeState.episode, animeState.lang, animeState.title);
+        // ----- USERS ONLINE (heartbeat presence) -----
+        (function () {
+            let sessionId;
+            try { sessionId = sessionStorage.getItem('yyPresenceId'); } catch (e) {}
+            if (!sessionId) {
+                sessionId = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12));
+                try { sessionStorage.setItem('yyPresenceId', sessionId); } catch (e) {}
+            }
+            const countEl = document.getElementById('homeOnlineCount');
+            const labelEl = document.getElementById('homeOnlineLabel');
+            function render(n) {
+                countEl.textContent = n;
+                labelEl.textContent = n === 1 ? 'user online' : 'users online';
+            }
+            async function beat() {
+                try {
+                    const res = await fetch('/api/presence', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId })
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (typeof data.online === 'number') render(Math.max(1, data.online));
+                } catch (e) { /* offline or function unavailable — keep last value */ }
+            }
+            beat();
+            setInterval(() => { if (!document.hidden) beat(); }, 20000);
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
+            window.addEventListener('pagehide', () => {
+                try {
+                    navigator.sendBeacon('/api/presence', new Blob([JSON.stringify({ sessionId, leaving: true })], { type: 'application/json' }));
+                } catch (e) {}
+            });
+        })();
+
+        navigateTo('home');
+    </script>
+    <script type="module">
+        import { mountLiquidEther } from './liquid-ether.js';
+        // Re-mounted whenever the background is toggled or recoloured in Settings.
+        let disposeBackground = null;
+        window.yyMountBackground = function () {
+            if (disposeBackground) { try { disposeBackground(); } catch (e) {} disposeBackground = null; }
+            const container = document.getElementById('liquidEtherBg');
+            container.innerHTML = '';
+            const prefs = window.yySiteSettings;
+            if (prefs && !prefs.backgroundEnabled()) return;
+            try {
+                disposeBackground = mountLiquidEther(container, {
+                colors: prefs ? prefs.backgroundColors() : ['#5227FF', '#FF9FFC', '#B497CF'],
+                mouseForce: 20,
+                cursorSize: 100,
+                isViscous: true,
+                viscous: 30,
+                iterationsViscous: 32,
+                iterationsPoisson: 32,
+                resolution: 0.5,
+                isBounce: false,
+                autoDemo: true,
+                autoSpeed: 0.5,
+                autoIntensity: 2.2,
+                takeoverDuration: 0.25,
+                autoResumeDelay: 3000,
+                autoRampDuration: 0.6
+                });
+            } catch (e) {
+                console.warn('LiquidEther background unavailable:', e);
+            }
+        };
+        window.yyMountBackground();
+    </script>
+    <!-- Settings -->
+    <div class="cc-modal hidden" id="ccSettings" role="dialog" aria-label="Chat settings">
+        <div class="cc-modal-card">
+            <div class="cc-modal-head"><h3>User Settings</h3><button class="cc-icon-btn" id="ccSettingsClose" aria-label="Close">✕</button></div>
+            <div class="cc-settings-body">
+                <div class="cc-settings-form">
+                    <section>
+                        <h4>My Account</h4>
+                        <label for="ccSetName">Username</label>
+                        <input id="ccSetName" maxlength="20" spellcheck="false">
+                        <div class="cc-hint" id="ccNameHint">You can change your name once a week.</div>
+                        <label id="ccPassLabel">Change password</label>
+                        <div class="cc-pass-wrap" id="ccCurrentPassWrap">
+                            <input id="ccSetCurrentPass" type="password" maxlength="72" placeholder="Current password" autocomplete="current-password">
+                            <button type="button" class="cc-pass-toggle" data-target="ccSetCurrentPass" aria-label="Show password">👁</button>
+                        </div>
+                        <div class="cc-pass-wrap">
+                            <input id="ccSetNewPass" type="password" maxlength="72" placeholder="New password (at least 6 characters)" autocomplete="new-password">
+                            <button type="button" class="cc-pass-toggle" data-target="ccSetNewPass" aria-label="Show password">👁</button>
+                        </div>
+                        <div class="cc-hint" id="ccPassHint">Leave blank to keep your current password. Changing it logs out your other devices.</div>
+                    </section>
+                    <section>
+                        <h4>Profile</h4>
+                        <label>Profile picture <span class="cc-nitro-tag">GIFs allowed</span></label>
+                        <div class="cc-upload-row">
+                            <div class="cc-thumb cc-thumb-avatar" id="ccAvatarThumb"></div>
+                            <button type="button" class="cc-btn" id="ccAvatarUpload">Upload picture / GIF</button>
+                            <button type="button" class="cc-btn cc-btn-ghost" id="ccAvatarRemove">Remove</button>
+                            <input type="file" id="ccAvatarFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+                        </div>
+                        <label>Profile banner <span class="cc-nitro-tag">GIFs allowed</span></label>
+                        <div class="cc-upload-row">
+                            <div class="cc-thumb cc-thumb-banner" id="ccBannerThumb"></div>
+                            <input type="color" id="ccSetBannerColor" title="Banner colour (used when there's no banner image)">
+                            <button type="button" class="cc-btn" id="ccBannerUpload">Upload picture / GIF</button>
+                            <button type="button" class="cc-btn cc-btn-ghost" id="ccBannerRemove">Remove</button>
+                            <input type="file" id="ccBannerFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+                        </div>
+                        <div class="cc-hint">Use your own photos or animated GIFs (PNG, JPG, GIF or WebP, up to 3 MB). Uploads save right away.</div>
+                        <label for="ccSetBio">About me</label>
+                        <textarea id="ccSetBio" maxlength="190" rows="3" placeholder="Tell everyone a bit about yourself"></textarea>
+                        <label>Custom status</label>
+                        <div class="cc-status-row">
+                            <button type="button" class="cc-btn cc-status-emoji" id="ccSetStatusEmoji" title="Pick an emoji">🙂</button>
+                            <input id="ccSetStatusText" maxlength="60" placeholder="What's up?">
+                        </div>
+                        <div class="cc-emoji-picker cc-emoji-picker-inline hidden" id="ccStatusEmojiPicker"></div>
+                    </section>
+                    <section>
+                        <h4>Nitro perks <span class="cc-nitro-tag">free for everyone</span></h4>
+                        <label>Name colour</label>
+                        <div class="cc-upload-row">
+                            <input type="color" id="ccSetNameColor" title="Name colour">
+                            <label class="cc-check"><input type="checkbox" id="ccSetGradientOn"> Gradient</label>
+                            <input type="color" id="ccSetNameGradient" title="Gradient end colour">
+                        </div>
+                        <label for="ccSetFont">Name font</label>
+                        <select id="ccSetFont">
+                            <option value="default">Default</option><option value="bold">Bold</option><option value="mono">Mono</option>
+                            <option value="serif">Serif</option><option value="cursive">Cursive</option><option value="pixel">Pixel</option>
+                        </select>
+                        <label>Avatar decoration</label>
+                        <div class="cc-deco-toolbar">
+                            <div class="cc-deco-tabs" id="ccDecoTabs" role="tablist">
+                                <button type="button" data-tab="classic">Classic</button>
+                                <button type="button" data-tab="discord">Discord</button>
+                                <button type="button" data-tab="flags">Flags</button>
+                            </div>
+                            <input type="search" id="ccDecoSearch" placeholder="Search decorations…" aria-label="Search decorations" class="hidden">
+                        </div>
+                        <div class="cc-deco-grid" id="ccDecoGrid"></div>
+                        <label>Profile effect <span class="cc-nitro-tag">animated</span></label>
+                        <div class="cc-deco-grid" id="ccEffectGrid"></div>
+                        <select id="ccEffectSelect" class="cc-effect-select" aria-label="Discord profile effect"></select>
+                        <label>Display name effect</label>
+                        <div class="cc-deco-grid cc-namefx-grid" id="ccNameFxGrid"></div>
+                        <label>Profile theme</label>
+                        <div class="cc-upload-row">
+                            <input type="color" id="ccSetThemePrimary" title="Primary"><span class="cc-hint">Primary</span>
+                            <input type="color" id="ccSetThemeAccent" title="Accent"><span class="cc-hint">Accent</span>
+                        </div>
+                    </section>
+                    <section>
+                        <h4>Privacy &amp; Safety</h4>
+                        <label class="cc-check"><input type="checkbox" id="ccSetDmFriendsOnly"> Only friends can send me private messages</label>
+                        <label>Blocked people</label>
+                        <div class="cc-blocked-list" id="ccBlockedList"><span class="cc-hint">Nobody blocked.</span></div>
+                        <div class="cc-hint">Blocked people can't message you or send friend requests, and you won't see their messages. Click someone's name and pick “Block” to block them.</div>
+                    </section>
+                    <div class="cc-error hidden" id="ccSettingsError" role="alert"></div>
+                    <div class="cc-settings-actions">
+                        <button type="button" class="cc-btn cc-btn-danger" id="ccLogout">Log out</button>
+                        <button type="button" class="cc-btn cc-btn-primary" id="ccSettingsSave">Save changes</button>
+                    </div>
+                </div>
+                <div class="cc-settings-preview">
+                    <div class="cc-hint">PREVIEW</div>
+                    <div id="ccProfilePreview"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mod tools (owner & mods): reports queue, word/link filter, room switches and the mod log -->
+    <div class="cc-modal hidden" id="ccModPanel" role="dialog" aria-label="Mod tools">
+        <div class="cc-modal-card cc-mod-card">
+            <div class="cc-modal-head"><h3>🛡️ Mod Tools</h3><button class="cc-icon-btn" id="ccModClose" aria-label="Close">✕</button></div>
+            <div class="cc-mod-tabs" role="tablist">
+                <button type="button" class="cc-side-tab active" data-modtab="reports" role="tab">🚩 Reports <span class="cc-count-badge hidden" id="ccModTabBadge">0</span></button>
+                <button type="button" class="cc-side-tab" data-modtab="filters" role="tab">🧹 Filter</button>
+                <button type="button" class="cc-side-tab" data-modtab="room" role="tab">⚙️ Room</button>
+                <button type="button" class="cc-side-tab" data-modtab="log" role="tab">📜 Mod log</button>
+            </div>
+            <div class="cc-mod-body" id="ccModBody"></div>
+        </div>
+    </div>
+
+    <!-- Report a message or profile -->
+    <div class="cc-modal hidden" id="ccReport" role="dialog" aria-label="Report">
+        <form class="cc-modal-card cc-report-card" id="ccReportForm">
+            <div class="cc-modal-head"><h3 id="ccReportTitle">🚩 Report</h3><button type="button" class="cc-icon-btn" id="ccReportClose" aria-label="Close">✕</button></div>
+            <div class="cc-settings-form cc-report-body">
+                <div class="cc-report-preview" id="ccReportPreview"></div>
+                <label for="ccReportReason">Reason</label>
+                <select id="ccReportReason" required>
+                    <option value="spam">Spam or flooding</option>
+                    <option value="harassment">Harassment or bullying</option>
+                    <option value="hate">Hate speech</option>
+                    <option value="nsfw">NSFW or gross content</option>
+                    <option value="scam">Scam or dangerous link</option>
+                    <option value="impersonation">Pretending to be someone else</option>
+                    <option value="other">Something else</option>
+                </select>
+                <label for="ccReportDetails">More details (optional)</label>
+                <textarea id="ccReportDetails" maxlength="500" rows="3" placeholder="Anything that helps the mods understand what happened"></textarea>
+                <div class="cc-hint">Reports are private — only the owner and mods see them.</div>
+                <div class="cc-error hidden" id="ccReportError" role="alert"></div>
+                <div class="cc-settings-actions">
+                    <button type="button" class="cc-btn cc-btn-ghost" id="ccReportCancel">Cancel</button>
+                    <button type="submit" class="cc-btn cc-btn-danger" id="ccReportSend">Send report</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reaction picker (opened from a message's 😊 button) -->
+    <div class="cc-react-pop hidden" id="ccReactPop">
+        <div class="cc-react-quick" id="ccReactQuick"></div>
+        <div class="cc-emoji-picker cc-emoji-picker-inline" id="ccReactPicker"></div>
+    </div>
+
+    <!-- Profile popout + image viewer -->
+    <div class="cc-popout hidden" id="ccPopout"></div>
+    <div class="cc-lightbox hidden" id="ccLightbox"><img alt=""></div>
+    <!-- Floating chat button (opens the community chat from any page) -->
+    <button class="cc-fab" id="ccFab" title="Chat" aria-label="Open chat">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5c0 4.7-4 8.5-9 8.5-1.2 0-2.4-.2-3.5-.6L4 21l1.8-4.5C4.3 15 3 13.4 3 11.5 3 6.8 7 3 12 3s9 3.8 9 8.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8.5" cy="11.5" r="1.1" fill="currentColor"/><circle cx="12" cy="11.5" r="1.1" fill="currentColor"/><circle cx="15.5" cy="11.5" r="1.1" fill="currentColor"/></svg>
+        <span class="cc-fab-badge hidden" id="ccFabBadge">0</span>
+    </button>
+    <div class="cc-toast hidden" id="ccToast"></div>
+
+    <!-- Site settings (opened from the ⚙️ in the sidebar / mobile nav) -->
+    <div class="yy-modal hidden" id="yySettings" role="dialog" aria-modal="true" aria-label="Settings">
+        <div class="yy-modal-card">
+            <nav class="yy-tabs">
+                <h3><span>⚙️</span>Settings</h3>
+                <button type="button" class="yy-tab yy-tab-gold active" data-tab="profile">👑 Profile</button>
+                <button type="button" class="yy-tab" data-tab="appearance">🎨 Appearance</button>
+                <button type="button" class="yy-tab" data-tab="cloak">🕶️ Tab Cloak</button>
+                <button type="button" class="yy-tab" data-tab="privacy">🔒 Privacy</button>
+            </nav>
+            <div class="yy-panel-wrap">
+                <div class="yy-panel-head"><h4 id="yyPanelTitle">Profile</h4><button type="button" class="yy-close" id="yySettingsClose" aria-label="Close settings">✕</button></div>
+
+                <div class="yy-panel active" data-panel="profile">
+                    <div class="yy-gold-hero">
+                        <h5>Every Nitro perk, free for everyone</h5>
+                        <p class="yy-hint">Customize your profile picture, banner and everything else on your chat profile, just like Discord Nitro, without paying for it.</p>
+                        <button type="button" class="yy-gold-btn" id="yyCustomizeProfile">✨ Customize Profile</button>
+                    </div>
+                    <div class="yy-perks">
+                        <div class="yy-perk">🖼️<div><b>Animated avatar</b>Upload any picture or GIF</div></div>
+                        <div class="yy-perk">🌄<div><b>Profile banner</b>Picture, GIF or a solid colour</div></div>
+                        <div class="yy-perk">🎨<div><b>Profile theme</b>Two-colour gradient card</div></div>
+                        <div class="yy-perk">💫<div><b>Avatar decorations</b>Rainbow, fire, neon, gold…</div></div>
+                        <div class="yy-perk">🎆<div><b>Profile effects</b>Sparkles, snow, hearts, confetti…</div></div>
+                        <div class="yy-perk">🌈<div><b>Display name styles</b>Colour, gradient, fonts and effects</div></div>
+                        <div class="yy-perk">😎<div><b>Custom status</b>Any emoji plus a message</div></div>
+                        <div class="yy-perk">📝<div><b>About me</b>Tell everyone about yourself</div></div>
+                    </div>
+                </div>
+
+                <div class="yy-panel" data-panel="appearance">
+                    <div class="yy-group">
+                        <div class="yy-group-title">Background</div>
+                        <div class="yy-row"><div class="yy-row-text"><b>Animated background</b><span>The flowing liquid effect behind every page</span></div>
+                            <label class="yy-switch"><input type="checkbox" id="yyBgEnabled"><span></span></label></div>
+                        <div class="yy-swatches" id="yyPaletteGrid"></div>
+                        <div class="yy-colors hidden" id="yyCustomColors">
+                            <input type="color" id="yyBgC1" aria-label="Background colour 1">
+                            <input type="color" id="yyBgC2" aria-label="Background colour 2">
+                            <input type="color" id="yyBgC3" aria-label="Background colour 3">
+                            <span class="yy-hint">Pick three colours for your own palette</span>
+                        </div>
+                    </div>
+                    <div class="yy-group">
+                        <div class="yy-group-title">Interface</div>
+                        <div class="yy-row"><div class="yy-row-text"><b>Glowing cursor</b><span>Turn off to use your normal mouse pointer</span></div>
+                            <label class="yy-switch"><input type="checkbox" id="yyCursor"><span></span></label></div>
+                        <div class="yy-row"><div class="yy-row-text"><b>Reduce motion</b><span>Turns off animations across the site</span></div>
+                            <label class="yy-switch"><input type="checkbox" id="yyReduceMotion"><span></span></label></div>
+                    </div>
+                </div>
+
+                <div class="yy-panel" data-panel="cloak">
+                    <div class="yy-group">
+                        <div class="yy-group-title">Disguise this tab</div>
+                        <p class="yy-hint">Changes the tab's title and icon so it looks like another site.</p>
+                        <div class="yy-swatches" id="yyCloakGrid"></div>
+                        <div class="yy-group hidden" id="yyCloakCustom">
+                            <div class="yy-field"><label for="yyCloakTitle">Tab title</label><input class="yy-input" id="yyCloakTitle" maxlength="80" placeholder="e.g. Google Docs"></div>
+                            <div class="yy-field"><label for="yyCloakIcon">Tab icon URL</label><input class="yy-input" id="yyCloakIcon" placeholder="https://example.com/favicon.ico"></div>
+                        </div>
+                        <div class="yy-row"><div class="yy-row-text"><b>Only when I switch tabs</b><span>Shows the disguise only while you're on another tab</span></div>
+                            <label class="yy-switch"><input type="checkbox" id="yyCloakOnHide"><span></span></label></div>
+                    </div>
+                    <div class="yy-group">
+                        <div class="yy-group-title">about:blank</div>
+                        <p class="yy-hint">Opens the site inside an about:blank tab, so the real address doesn't show up in your history.</p>
+                        <div class="yy-btn-row"><button type="button" class="yy-btn" id="yyAboutBlank">🪟 Open in about:blank</button></div>
+                    </div>
+                </div>
+
+                <div class="yy-panel" data-panel="privacy">
+                    <div class="yy-group">
+                        <div class="yy-group-title">Panic key</div>
+                        <p class="yy-hint">Press this key on any page to jump straight to another website.</p>
+                        <div class="yy-row"><div class="yy-row-text"><b>Key</b><span>Click, then press the key you want to use</span></div>
+                            <div class="yy-btn-row"><button type="button" class="yy-btn yy-key" id="yyPanicKey">Not set</button><button type="button" class="yy-btn" id="yyPanicClear">Clear</button></div></div>
+                        <div class="yy-field"><label for="yyPanicUrl">Redirect to</label><input class="yy-input" id="yyPanicUrl" placeholder="https://classroom.google.com"></div>
+                    </div>
+                    <div class="yy-group">
+                        <div class="yy-group-title">Safety</div>
+                        <div class="yy-row"><div class="yy-row-text"><b>Confirm before leaving</b><span>Asks before the tab is closed or reloaded</span></div>
+                            <label class="yy-switch"><input type="checkbox" id="yyConfirmLeave"><span></span></label></div>
+                    </div>
+                    <div class="yy-group">
+                        <div class="yy-group-title">Reset</div>
+                        <div class="yy-btn-row"><button type="button" class="yy-btn" id="yyResetSettings">↺ Reset site settings</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/scram/scramjet.all.js"></script>
+    <script src="/baremux/index.js"></script>
+    <script src="scramjet-search.js"></script>
+    <script src="site-settings.js"></script>
+    <script src="community-chat.js"></script>
+<script async src="/.netlify/scripts/ar" data-netlify-deploy-id="6ad929097f2af334e1cb2f43" data-netlify-site-id="c29ccb71-e481-47f0-87c8-52892b7ec2b5" data-agent-runner-id="6ad9282036cc778f3e287f68"></script>
+</body>
+</html>
+```
